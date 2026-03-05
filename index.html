@@ -1,53 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
-body {
-    margin: 0;
-    background: #000;
+
+body{
+margin:0;
+background:#111;
+font-family:Arial, sans-serif;
 }
 
-canvas {
-    display: block;
-    margin: 0 auto 20px auto;
-    width: 100%;
-    height: auto;
+#pdf-container{
+max-width:1000px;
+margin:auto;
+padding:20px;
 }
+
+canvas{
+display:block;
+width:100%;
+height:auto;
+margin-bottom:30px;
+box-shadow:0 10px 25px rgba(0,0,0,0.5);
+border-radius:6px;
+}
+
 </style>
 </head>
+
 <body>
 
 <div id="pdf-container"></div>
 
 <script>
+
 const url = "Portfolio.pdf";
 
-pdfjsLib.getDocument(url).promise.then(function(pdf) {
-    const container = document.getElementById("pdf-container");
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-        pdf.getPage(pageNumber).then(function(page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
+const container = document.getElementById("pdf-container");
 
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
+pdfjsLib.getDocument(url).promise.then(pdf => {
 
-            container.appendChild(canvas);
+for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
-            page.render({
-                canvasContext: context,
-                viewport: viewport
-            });
-        });
-    }
+pdf.getPage(pageNumber).then(page => {
+
+const scale = window.innerWidth < 768 ? 1.5 : 2;
+
+const viewport = page.getViewport({ scale: scale });
+
+const canvas = document.createElement("canvas");
+
+const context = canvas.getContext("2d");
+
+canvas.height = viewport.height;
+canvas.width = viewport.width;
+
+container.appendChild(canvas);
+
+page.render({
+canvasContext: context,
+viewport: viewport
 });
+
+});
+
+}
+
+});
+
 </script>
 
 </body>
