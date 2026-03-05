@@ -52,7 +52,7 @@ for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
 pdf.getPage(pageNumber).then(page => {
 
-const scale = window.innerWidth < 768 ? 1.5 : 2;
+const scale = window.innerWidth < 768 ? 2 : 2.8;
 
 const viewport = page.getViewport({ scale: scale });
 
