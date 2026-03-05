@@ -16,40 +16,26 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #000;
-    overflow-x: hidden;
+    background: #000;      /* sfondo nero */
+    overflow-x: hidden;    /* niente scroll laterale */
 }
-
-/* container generico */
 
 #pdf-container {
     width: 100%;
     margin: 0;
-    padding: 10px 0;
-    box-sizing: border-box;
+    padding: 10px 0;       /* solo spazio verticale tra le pagine */
+    box-sizing: border-box;;
 }
-
-/* canvas portfolio */
 
 canvas {
     display: block;
     width: 100%;
     height: auto;
-    margin: 0 0 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-    background: transparent;
+    margin: 0 0 20px 0;      /* margine verticale tra le pagine */
+    border-radius: 8px;       /* angoli leggermente arrotondati */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6); /* ombra morbida */
+    background: transparent;   /* sfondo trasparente */
 }
-
-/* loading pdf */
-
-#loading-frame{
-    width:100%;
-    height:100vh;
-    border:none;
-}
-
-/* responsive */
 
 @media (max-width:768px){
 
@@ -69,13 +55,7 @@ margin-bottom:10px;
 
 <body>
 
-<!-- pagina loading -->
-
-<iframe id="loading-frame" src="loading.pdf"></iframe>
-
-<!-- portfolio -->
-
-<div id="pdf-container" style="display:none;"></div>
+<div id="pdf-container"></div>
 
 <script>
 
@@ -85,12 +65,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const container = document.getElementById("pdf-container");
-const loadingFrame = document.getElementById("loading-frame");
 
 pdfjsLib.getDocument(url).promise.then(pdf => {
-
-loadingFrame.style.display = "none";
-container.style.display = "block";
 
 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
