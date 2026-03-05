@@ -2,48 +2,51 @@
 <html lang="it">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
 <title>Portfolio</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
-/* --- Corpo della pagina --- */
+
 body{
-    margin:0;
-    background:#111;
-    font-family:Arial, sans-serif;
-    overflow-x:hidden; /* previene scroll laterale su iPhone */
+margin:0;
+background:#111;
+font-family:Arial, sans-serif;
+overflow-x:hidden;
 }
 
-/* --- Contenitore PDF --- */
 #pdf-container{
-    width:100%;
-    max-width:1400px;
-    margin:auto;
-    padding:10px;
+width:100%;
+max-width:1400px;
+margin:auto;
+padding:10px;
 }
 
-/* --- Canvas PDF --- */
 canvas{
-    display:block;
-    max-width:100%;
-    height:auto;
-    margin:0 auto 15px auto;
-    border-radius:4px;
-    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+display:block;
+max-width:100%;
+height:auto;
+margin:0 auto 15px auto;
+border-radius:4px;
+box-shadow:0 8px 25px rgba(0,0,0,0.4);
 }
 
-/* --- Media query per smartphone --- */
 @media (max-width:768px){
-    #pdf-container{
-        padding:5px;
-    }
-    canvas{
-        margin-bottom:10px;
-    }
+
+#pdf-container{
+padding:5px;
 }
+
+canvas{
+margin-bottom:10px;
+}
+
+}
+
 </style>
 
 </head>
@@ -53,6 +56,7 @@ canvas{
 <div id="pdf-container"></div>
 
 <script>
+
 const url = "Portfolio.pdf";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -62,35 +66,34 @@ const container = document.getElementById("pdf-container");
 
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
-        pdf.getPage(pageNumber).then(page => {
+pdf.getPage(pageNumber).then(page => {
 
-            // --- Ottimizzazione Retina ---
-            const ratio = window.devicePixelRatio || 1;
-            const scale = window.innerWidth < 768 ? 2.2 : 3;
-            const viewport = page.getViewport({ scale: scale * ratio });
+const scale = window.innerWidth < 768 ? 2.2 : 3;
 
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
+const viewport = page.getViewport({ scale: scale });
 
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.style.width = (viewport.width / ratio) + "px";
-            canvas.style.height = (viewport.height / ratio) + "px";
+const canvas = document.createElement("canvas");
 
-            container.appendChild(canvas);
+const context = canvas.getContext("2d");
 
-            page.render({
-                canvasContext: context,
-                viewport: viewport
-            });
+canvas.height = viewport.height;
+canvas.width = viewport.width;
 
-        });
+container.appendChild(canvas);
 
-    }
+page.render({
+canvasContext: context,
+viewport: viewport
+});
 
 });
+
+}
+
+});
+
 </script>
 
 </body>
