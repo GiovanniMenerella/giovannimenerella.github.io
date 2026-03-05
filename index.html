@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto 20px auto;
+    width: 100%;
+    height: auto;
+}
+</style>
+</head>
+<body>
+
+<div id="pdf-container"></div>
+
+<script>
+const url = "Portfolio.pdf";
+
+pdfjsLib.getDocument(url).promise.then(function(pdf) {
+    const container = document.getElementById("pdf-container");
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            container.appendChild(canvas);
+
+            page.render({
+                canvasContext: context,
+                viewport: viewport
+            });
+        });
+    }
+});
+</script>
+
+</body>
+</html>
