@@ -13,29 +13,28 @@
 <style>
 
 body, html {
-    margin:0;
-    padding:0;
-    width:100%;
-    overflow-x:hidden; /* blocca scroll laterale */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: #000;      /* sfondo nero */
+    overflow-x: hidden;    /* niente scroll laterale */
 }
 
-#pdf-container{
-    width:95%;           /* leggermente più piccolo della viewport */
-    max-width:1400px;    /* limite su desktop */
-    margin:0 auto;       /* centra il contenitore */
-    padding:10px 0;      /* spazio verticale tra PDF e bordo */
-    box-sizing:border-box;
+#pdf-container {
+    width: 100%;
+    margin: 0;
+    padding: 10px 0;       /* solo spazio verticale tra le pagine */
+    box-sizing: border-box;;
 }
 
 canvas {
-    display:block;
-    width:100%;
-    max-width:100%;
-    height:auto;
-    margin:0 auto 20px auto;  /* margine inferiore per separare le pagine */
-    border-radius:4px;
-    box-shadow:0 8px 25px rgba(0,0,0,0.4);
-    box-sizing:border-box;
+    display: block;
+    width: 100%;           /* full-width */
+    height: auto;
+    margin: 0 0 20px 0;    /* solo margine verticale tra le pagine */
+    border-radius: 0;      /* niente arrotondamenti */
+    box-shadow: none;      /* niente ombre */
+    background: transparent; /* canvas trasparente */
 }
 
 @media (max-width:768px){
