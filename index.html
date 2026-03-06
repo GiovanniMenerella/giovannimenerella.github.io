@@ -8,16 +8,14 @@
 
 <title>Portfolio</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <style>
 
 body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    background: #000;
-    overflow-x: hidden;
+margin:0;
+padding:0;
+width:100%;
+background:#000;
+overflow-x:hidden;
 }
 
 /* LOADER */
@@ -60,21 +58,21 @@ transition:width 0.2s;
 
 /* PDF */
 
-#pdf-container {
-    width: 100%;
-    margin: 0;
-    padding: 10px 0;
-    box-sizing: border-box;
+#pdf-container{
+width:100%;
+margin:0;
+padding:10px 0;
+box-sizing:border-box;
 }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-    margin: 0 0 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-    background: transparent;
+canvas{
+display:block;
+width:100%;
+height:auto;
+margin:0 0 20px 0;
+border-radius:8px;
+box-shadow:0 4px 15px rgba(0,0,0,0.6);
+background:transparent;
 }
 
 @media (max-width:768px){
@@ -96,13 +94,15 @@ margin-bottom:10px;
 <body>
 
 <div id="loader">
-  <div id="loader-text">Caricamento 0%</div>
-  <div id="progress-bar">
-    <div id="progress"></div>
-  </div>
+<div id="loader-text">Caricamento...</div>
+<div id="progress-bar">
+<div id="progress"></div>
+</div>
 </div>
 
 <div id="pdf-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
 
@@ -115,38 +115,42 @@ const container = document.getElementById("pdf-container");
 
 const loadingTask = pdfjsLib.getDocument(url);
 
-loadingTask.onProgress = function (progressData) {
+loadingTask.onProgress = function(progressData){
 
-const percent = Math.round((progressData.loaded / progressData.total) * 100);
+if(progressData.total){
 
-document.getElementById("progress").style.width = percent + "%";
-document.getElementById("loader-text").textContent = "Caricamento " + percent + "%";
+const percent = Math.round((progressData.loaded/progressData.total)*100);
+
+document.getElementById("progress").style.width = percent+"%";
+document.getElementById("loader-text").textContent = "Caricamento "+percent+"%";
+
+}
 
 };
 
-loadingTask.promise.then(pdf => {
+loadingTask.promise.then(pdf=>{
 
-document.getElementById("loader").style.display = "none";
+document.getElementById("loader").style.display="none";
 
-for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+for(let pageNumber=1; pageNumber<=pdf.numPages; pageNumber++){
 
-pdf.getPage(pageNumber).then(page => {
+pdf.getPage(pageNumber).then(page=>{
 
 const scale = window.innerWidth < 768 ? 2.2 : 3;
 
-const viewport = page.getViewport({ scale: scale });
+const viewport = page.getViewport({scale:scale});
 
-const canvas = document.createElement("canvas");
-const context = canvas.getContext("2d");
+const canvas=document.createElement("canvas");
+const context=canvas.getContext("2d");
 
-canvas.height = viewport.height;
-canvas.width = viewport.width;
+canvas.height=viewport.height;
+canvas.width=viewport.width;
 
 container.appendChild(canvas);
 
 page.render({
-canvasContext: context,
-viewport: viewport
+canvasContext:context,
+viewport:viewport
 });
 
 });
