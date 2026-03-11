@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" style="background:#000;">
 
 <head>
 
@@ -89,8 +89,7 @@ margin-bottom:10px;
 
 </style>
 
-<!-- pdf.js caricato senza bloccare la pagina -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 </head>
 
@@ -107,8 +106,6 @@ margin-bottom:10px;
 
 <script>
 
-window.addEventListener("load", function(){
-
 const url = "Portfolio.pdf";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -116,7 +113,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 const container = document.getElementById("pdf-container");
 
-/* PROGRESSO FAKE PER EVITARE SCHERMATA BIANCA */
+/* PROGRESSO FAKE */
 
 let fakeProgress = 0;
 
@@ -189,8 +186,6 @@ viewport:viewport
 });
 
 }
-
-});
 
 });
 
