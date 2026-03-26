@@ -18,7 +18,9 @@ body, html {
     width: 100%;
     background: #000;
     overflow-x: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* ================= LOADER ================= */
@@ -31,43 +33,72 @@ body, html {
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    overflow: hidden;
 }
 
+/* contenuto */
 .loader-inner {
     text-align: center;
 }
 
+/* NOME */
 .name {
     color: #fff;
-    font-size: 2.4rem;
-    font-weight: 300;
-    letter-spacing: 6px;
+    font-size: 2.6rem;
+    font-weight: 200;
+    letter-spacing: 8px;
+
     opacity: 0;
-    transform: scale(0.96);
-    filter: blur(8px);
-    animation: intro 2.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    transform: translateY(12px);
+    filter: blur(6px);
+
+    animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
-@keyframes intro {
+/* SOTTOTITOLO */
+.role {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    letter-spacing: 0px; /* parte chiuso */
+    margin-top: 14px;
+
+    opacity: 0;
+    transform: translateY(10px);
+
+    animation: roleIn 1.8s ease forwards;
+    animation-delay: 1.4s;
+}
+
+/* ANIMAZIONI ENTRATA */
+
+@keyframes nameIn {
     0% {
         opacity: 0;
-        transform: scale(0.96);
-        filter: blur(8px);
-    }
-    40% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
+        transform: translateY(12px);
+        filter: blur(6px);
     }
     100% {
         opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
     }
 }
 
-/* uscita cinematografica */
+@keyframes roleIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+        letter-spacing: 0px;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: 4px; /* tracking dinamico */
+    }
+}
+
+/* USCITA CINEMATOGRAFICA */
 #loader.exit {
-    animation: zoomOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes zoomOut {
@@ -77,8 +108,8 @@ body, html {
         opacity: 1;
     }
     100% {
-        transform: scale(1.15);
-        filter: blur(12px);
+        transform: scale(1.12);
+        filter: blur(10px);
         opacity: 0;
     }
 }
@@ -91,9 +122,8 @@ body, html {
     padding: 10px 0;
     box-sizing: border-box;
 
-    /* animazione ingresso */
     opacity: 0;
-    transform: scale(1.05);
+    transform: scale(1.04);
     transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
@@ -119,6 +149,11 @@ canvas {
     canvas{
         margin-bottom:10px;
     }
+
+    .name {
+        font-size: 2rem;
+        letter-spacing: 6px;
+    }
 }
 
 </style>
@@ -129,7 +164,8 @@ canvas {
 <!-- LOADER -->
 <div id="loader">
     <div class="loader-inner">
-        <h1 class="name">GIOVANNI MENERELLA</h1>
+        <h1 class="name">IL TUO NOME</h1>
+        <p class="role">fotografia</p>
     </div>
 </div>
 
@@ -147,16 +183,16 @@ const container = document.getElementById("pdf-container");
 
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
-    /* TRANSIZIONE CINEMATOGRAFICA */
+    /* TIMING PERFETTO (leggibile + cinematografico) */
 
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
         document.getElementById("pdf-container").classList.add("show");
-    }, 2200);
+    }, 4000); // tempo per leggere bene
 
     setTimeout(() => {
         document.getElementById("loader").remove();
-    }, 3400);
+    }, 5500);
 
     /* RENDER PDF */
 
