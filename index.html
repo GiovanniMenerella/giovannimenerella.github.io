@@ -44,28 +44,25 @@ body, html {
 .name {
     color: #fff;
     font-size: 2.6rem;
-    font-weight: 500; /* grassetto elegante */
-    letter-spacing: 6px;
-
+    font-weight: 500;
+    letter-spacing: 4px;
+    font-stretch: semi-condensed; /* elegante e leggermente schiacciato */
     opacity: 0;
     transform: translateY(12px);
     filter: blur(6px);
-
     animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 /* SOTTOTITOLO */
 .role {
     color: rgba(255,255,255,0.7);
-    font-size: 1.5rem; /* più grande */
-    letter-spacing: 0px;
-    margin-top: 16px;
-
+    font-size: 1.5rem;
+    letter-spacing: 10px; /* più spazio tra le lettere */
+    margin-top: 28px; /* posizionata leggermente più sotto il nome */
     opacity: 0;
     transform: translateY(10px);
-
     animation: roleIn 1.8s ease forwards;
-    animation-delay: 1.4s;
+    animation-delay: 1.5s;
 }
 
 /* ANIMAZIONI ENTRATA */
@@ -92,7 +89,7 @@ body, html {
     100% {
         opacity: 1;
         transform: translateY(0);
-        letter-spacing: 4px;
+        letter-spacing: 10px;
     }
 }
 
@@ -121,7 +118,6 @@ body, html {
     margin: 0;
     padding: 10px 0;
     box-sizing: border-box;
-
     opacity: 0;
     transform: scale(1.04);
     transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
@@ -152,7 +148,14 @@ canvas {
 
     .name {
         font-size: 2rem;
+        letter-spacing: 3px;
+        font-stretch: semi-condensed;
+    }
+
+    .role {
+        margin-top: 20px;
         letter-spacing: 6px;
+        font-size: 1.3rem;
     }
 }
 
@@ -184,7 +187,6 @@ const container = document.getElementById("pdf-container");
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
     /* TIMING OTTIMIZZATO */
-
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
         document.getElementById("pdf-container").classList.add("show");
@@ -195,7 +197,6 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
     }, 5500);
 
     /* RENDER PDF */
-
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
         pdf.getPage(pageNumber).then(page => {
@@ -223,6 +224,5 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
 });
 
 </script>
-
 </body>
 </html>
