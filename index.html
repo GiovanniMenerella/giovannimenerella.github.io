@@ -11,23 +11,23 @@
 
 <style>
 
-/* RESET */
+/* ================= RESET ================= */
 body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #000;
+    background: #fff; /* sfondo bianco globale */
     overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
 }
 
 /* ================= LOADER ================= */
-
 #loader {
     position: fixed;
     inset: 0;
-    background: #000;
+    background: #fff;  /* sfondo bianco */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -38,11 +38,10 @@ body, html {
     text-align: center;
 }
 
-/* NOME */
 .name {
-    color: #fff;
+    color: #000; /* testo nero */
     font-size: 2.6rem;
-    font-weight: 700; /* grassetto */
+    font-weight: 700;
     letter-spacing: 4px; 
     opacity: 0;
     transform: translateY(12px);
@@ -50,9 +49,8 @@ body, html {
     animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
-/* SOTTOTITOLO */
 .role {
-    color: rgba(255,255,255,0.7);
+    color: rgba(0,0,0,0.7); /* sottotitolo nero semitrasparente */
     font-size: 1.5rem;
     letter-spacing: 10px; 
     margin-top: 28px; 
@@ -111,11 +109,15 @@ body, html {
 #pdf-container {
     width: 100%;
     margin: 0;
-    padding: 10px 0;
+    padding: 20px 0;
     box-sizing: border-box;
     opacity: 0;
     transform: scale(1.04);
     transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    background: #f5f5f5; /* sfondo chiaro per contrastare le pagine */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #pdf-container.show {
@@ -125,19 +127,20 @@ body, html {
 
 canvas {
     display: block;
-    width: 100%;
+    width: 90%;
     height: auto;
-    margin: 0 0 20px 0;
+    margin: 20px 0;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-    background: transparent;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3); /* ombra elegante */
+    background: #fff; /* sfondo bianco della pagina PDF */
+    opacity: 0; /* inizialmente invisibile, fade-in via JS */
 }
 
 /* MOBILE */
 @media (max-width:768px){
     .name {
-        font-size: 1.8rem;  /* più piccolo su smartphone */
-        letter-spacing: 2px; /* meno spazio tra le lettere */
+        font-size: 1.8rem;
+        letter-spacing: 2px;
     }
     .role {
         margin-top: 20px;
@@ -145,10 +148,10 @@ canvas {
         font-size: 1.3rem;
     }
     #pdf-container {
-        padding: 5px;
+        padding: 10px 0;
     }
     canvas {
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
 }
 
@@ -178,15 +181,18 @@ const container = document.getElementById("pdf-container");
 
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
+    // Mostra loader prima dell'ingresso del PDF
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
         document.getElementById("pdf-container").classList.add("show");
     }, 4000);
 
+    // Rimuove loader dal DOM
     setTimeout(() => {
         document.getElementById("loader").remove();
     }, 5500);
 
+    // Renderizza le pagine PDF
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
             const scale = window.innerWidth < 768 ? 2.2 : 3;
@@ -196,14 +202,20 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             container.appendChild(canvas);
+
+            // Render con fade-in
             page.render({
                 canvasContext: context,
                 viewport: viewport
+            }).promise.then(() => {
+                canvas.style.transition = "opacity 0.8s ease";
+                canvas.style.opacity = 1;
             });
         });
     }
 
 });
 </script>
+
 </body>
 </html>
