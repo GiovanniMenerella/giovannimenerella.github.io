@@ -1,107 +1,139 @@
 <!DOCTYPE html>
-<html lang="it" style="background:#000;">
+<html lang="it">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <title>Portfolio</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 <style>
 
+/* RESET */
 body, html {
-margin:0;
-padding:0;
-width:100%;
-background:#000;
-overflow-x:hidden;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: #000;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
-/* LOADER */
+/* ================= LOADER ================= */
 
-#loader{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-z-index:9999;
-color:white;
-font-family:sans-serif;
+#loader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    overflow: hidden;
 }
 
-#loader-text{
-margin-bottom:15px;
-font-size:18px;
+.loader-inner {
+    text-align: center;
 }
 
-#progress-bar{
-width:70%;
-height:8px;
-background:#222;
-border-radius:10px;
-overflow:hidden;
+.name {
+    color: #fff;
+    font-size: 2.4rem;
+    font-weight: 300;
+    letter-spacing: 6px;
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(8px);
+    animation: intro 2.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
-#progress{
-width:0%;
-height:100%;
-background:white;
-transition:width 0.2s;
+@keyframes intro {
+    0% {
+        opacity: 0;
+        transform: scale(0.96);
+        filter: blur(8px);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
-/* PDF */
-
-#pdf-container{
-width:100%;
-margin:0;
-padding:10px 0;
-box-sizing:border-box;
+/* uscita cinematografica */
+#loader.exit {
+    animation: zoomOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-canvas{
-display:block;
-width:100%;
-height:auto;
-margin:0 0 20px 0;
-border-radius:8px;
-box-shadow:0 4px 15px rgba(0,0,0,0.6);
-background:transparent;
+@keyframes zoomOut {
+    0% {
+        transform: scale(1);
+        filter: blur(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.15);
+        filter: blur(12px);
+        opacity: 0;
+    }
+}
+
+/* ================= PDF ================= */
+
+#pdf-container {
+    width: 100%;
+    margin: 0;
+    padding: 10px 0;
+    box-sizing: border-box;
+
+    /* animazione ingresso */
+    opacity: 0;
+    transform: scale(1.05);
+    transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+#pdf-container.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    background: transparent;
 }
 
 @media (max-width:768px){
-
-#pdf-container{
-padding:5px;
-}
-
-canvas{
-margin-bottom:10px;
-}
-
+    #pdf-container{
+        padding:5px;
+    }
+    canvas{
+        margin-bottom:10px;
+    }
 }
 
 </style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 </head>
 
 <body>
 
+<!-- LOADER -->
 <div id="loader">
-<div id="loader-text">Caricamento...</div>
-<div id="progress-bar">
-<div id="progress"></div>
-</div>
+    <div class="loader-inner">
+        <h1 class="name">GIOVANNI MENERELLA</h1>
+    </div>
 </div>
 
+<!-- PDF -->
 <div id="pdf-container"></div>
 
 <script>
@@ -113,79 +145,44 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 const container = document.getElementById("pdf-container");
 
-/* PROGRESSO FAKE */
+pdfjsLib.getDocument(url).promise.then(pdf => {
 
-let fakeProgress = 0;
+    /* TRANSIZIONE CINEMATOGRAFICA */
 
-const fakeLoader = setInterval(()=>{
+    setTimeout(() => {
+        document.getElementById("loader").classList.add("exit");
+        document.getElementById("pdf-container").classList.add("show");
+    }, 2200);
 
-if(fakeProgress < 90){
+    setTimeout(() => {
+        document.getElementById("loader").remove();
+    }, 3400);
 
-fakeProgress += 1;
+    /* RENDER PDF */
 
-document.getElementById("progress").style.width = fakeProgress + "%";
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
 
-document.getElementById("loader-text").textContent =
-"Caricamento " + fakeProgress + "%";
+        pdf.getPage(pageNumber).then(page => {
 
-}
+            const scale = window.innerWidth < 768 ? 2.2 : 3;
+            const viewport = page.getViewport({ scale });
 
-},80);
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
 
-/* CARICAMENTO PDF */
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-const loadingTask = pdfjsLib.getDocument(url);
+            container.appendChild(canvas);
 
-loadingTask.onProgress = function(progressData){
+            page.render({
+                canvasContext: context,
+                viewport: viewport
+            });
 
-if(progressData.total){
+        });
 
-clearInterval(fakeLoader);
-
-const percent = Math.round((progressData.loaded/progressData.total)*100);
-
-document.getElementById("progress").style.width = percent+"%";
-
-document.getElementById("loader-text").textContent =
-"Caricamento "+percent+"%";
-
-}
-
-};
-
-loadingTask.promise.then(pdf=>{
-
-document.getElementById("progress").style.width="100%";
-document.getElementById("loader-text").textContent="Caricamento completato";
-
-setTimeout(()=>{
-document.getElementById("loader").style.display="none";
-},300);
-
-for(let pageNumber=1; pageNumber<=pdf.numPages; pageNumber++){
-
-pdf.getPage(pageNumber).then(page=>{
-
-const scale = window.innerWidth < 768 ? 2.2 : 3;
-
-const viewport = page.getViewport({scale:scale});
-
-const canvas=document.createElement("canvas");
-const context=canvas.getContext("2d");
-
-canvas.height=viewport.height;
-canvas.width=viewport.width;
-
-container.appendChild(canvas);
-
-page.render({
-canvasContext:context,
-viewport:viewport
-});
-
-});
-
-}
+    }
 
 });
 
