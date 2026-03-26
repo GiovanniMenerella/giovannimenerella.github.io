@@ -16,7 +16,7 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #fff; /* sfondo bianco globale */
+    background: #000; /* inizialmente nero, loader */
     overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -27,7 +27,7 @@ body, html {
 #loader {
     position: fixed;
     inset: 0;
-    background: #fff;  /* sfondo bianco */
+    background: #fff;  /* scritte su bianco */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,7 +39,7 @@ body, html {
 }
 
 .name {
-    color: #000; /* testo nero */
+    color: #000;
     font-size: 2.6rem;
     font-weight: 700;
     letter-spacing: 4px; 
@@ -50,7 +50,7 @@ body, html {
 }
 
 .role {
-    color: rgba(0,0,0,0.7); /* sottotitolo nero semitrasparente */
+    color: rgba(0,0,0,0.7);
     font-size: 1.5rem;
     letter-spacing: 10px; 
     margin-top: 28px; 
@@ -60,31 +60,14 @@ body, html {
     animation-delay: 1.5s;
 }
 
-/* ANIMAZIONI ENTRATA */
 @keyframes nameIn {
-    0% {
-        opacity: 0;
-        transform: translateY(12px);
-        filter: blur(6px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
-    }
+    0% { opacity:0; transform:translateY(12px); filter:blur(6px); }
+    100% { opacity:1; transform:translateY(0); filter:blur(0);}
 }
 
 @keyframes roleIn {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-        letter-spacing: 0px;
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        letter-spacing: 10px;
-    }
+    0% { opacity:0; transform:translateY(10px); letter-spacing:0px;}
+    100% { opacity:1; transform:translateY(0); letter-spacing:10px;}
 }
 
 /* USCITA CINEMATOGRAFICA */
@@ -93,28 +76,31 @@ body, html {
 }
 
 @keyframes zoomOut {
-    0% {
-        transform: scale(1);
-        filter: blur(0);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1.12);
-        filter: blur(10px);
-        opacity: 0;
-    }
+    0% { transform: scale(1); filter: blur(0); opacity:1;}
+    100% { transform: scale(1.12); filter: blur(10px); opacity:0;}
+}
+
+/* ================= TRANSIZIONE BIANCO ================= */
+#transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    z-index: 999;
 }
 
 /* ================= PDF ================= */
 #pdf-container {
     width: 100%;
     margin: 0;
-    padding: 20px 0;
+    padding: 10px 0;
     box-sizing: border-box;
     opacity: 0;
     transform: scale(1.04);
     transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-    background: #f5f5f5; /* sfondo chiaro per contrastare le pagine */
+    background: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -127,32 +113,21 @@ body, html {
 
 canvas {
     display: block;
-    width: 90%;
+    width: 100%; /* dimensioni originali */
     height: auto;
-    margin: 20px 0;
+    margin: 0 0 20px 0;
     border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3); /* ombra elegante */
-    background: #fff; /* sfondo bianco della pagina PDF */
-    opacity: 0; /* inizialmente invisibile, fade-in via JS */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    background: #fff;
+    opacity: 0;
 }
 
 /* MOBILE */
 @media (max-width:768px){
-    .name {
-        font-size: 1.8rem;
-        letter-spacing: 2px;
-    }
-    .role {
-        margin-top: 20px;
-        letter-spacing: 6px;
-        font-size: 1.3rem;
-    }
-    #pdf-container {
-        padding: 10px 0;
-    }
-    canvas {
-        margin-bottom: 15px;
-    }
+    .name { font-size:1.8rem; letter-spacing:2px;}
+    .role { margin-top:20px; letter-spacing:6px; font-size:1.3rem;}
+    #pdf-container { padding:5px;}
+    canvas { margin-bottom:10px;}
 }
 
 </style>
@@ -168,6 +143,9 @@ canvas {
     </div>
 </div>
 
+<!-- TRANSITION OVERLAY -->
+<div id="transition-overlay"></div>
+
 <!-- PDF -->
 <div id="pdf-container"></div>
 
@@ -178,21 +156,26 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const container = document.getElementById("pdf-container");
+const overlay = document.getElementById("transition-overlay");
 
+// Mostra overlay bianco prima del PDF
+setTimeout(() => {
+    overlay.style.opacity = 1; // fade to bianco
+}, 3500);
+
+// Nasconde loader e mostra PDF
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
-    // Mostra loader prima dell'ingresso del PDF
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
         document.getElementById("pdf-container").classList.add("show");
-    }, 4000);
+    }, 4500);
 
-    // Rimuove loader dal DOM
     setTimeout(() => {
         document.getElementById("loader").remove();
-    }, 5500);
+        overlay.style.opacity = 0; // rimuove overlay dopo transizione
+    }, 6000);
 
-    // Renderizza le pagine PDF
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
             const scale = window.innerWidth < 768 ? 2.2 : 3;
@@ -203,11 +186,7 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
             canvas.width = viewport.width;
             container.appendChild(canvas);
 
-            // Render con fade-in
-            page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise.then(() => {
+            page.render({canvasContext: context, viewport: viewport}).promise.then(()=>{
                 canvas.style.transition = "opacity 0.8s ease";
                 canvas.style.opacity = 1;
             });
