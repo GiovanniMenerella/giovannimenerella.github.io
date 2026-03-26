@@ -16,7 +16,7 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #000; /* inizialmente nero, loader */
+    background: #000; /* inizialmente nero per loader */
     overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -27,7 +27,7 @@ body, html {
 #loader {
     position: fixed;
     inset: 0;
-    background: #fff;  /* scritte su bianco */
+    background: #fff;  /* scritte nere su bianco */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -98,7 +98,7 @@ body, html {
     padding: 10px 0;
     box-sizing: border-box;
     opacity: 0;
-    transform: scale(1.04);
+    transform: scale(1.04); /* effetto zoom-in iniziale */
     transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     background: #fff;
     display: flex;
@@ -108,18 +108,19 @@ body, html {
 
 #pdf-container.show {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1); /* zoom finale */
 }
 
 canvas {
     display: block;
-    width: 100%; /* dimensioni originali */
+    width: 100%; /* larghezza originale */
     height: auto;
     margin: 0 0 20px 0;
     border-radius: 8px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     background: #fff;
-    opacity: 0;
+    opacity: 0; /* fade-in individuale */
+    transition: opacity 0.8s ease;
 }
 
 /* MOBILE */
@@ -168,7 +169,7 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
 
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
-        document.getElementById("pdf-container").classList.add("show");
+        document.getElementById("pdf-container").classList.add("show"); // zoom-in
     }, 4500);
 
     setTimeout(() => {
@@ -176,6 +177,7 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
         overlay.style.opacity = 0; // rimuove overlay dopo transizione
     }, 6000);
 
+    // Renderizza le pagine con fade-in
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
             const scale = window.innerWidth < 768 ? 2.2 : 3;
@@ -187,7 +189,6 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
             container.appendChild(canvas);
 
             page.render({canvasContext: context, viewport: viewport}).promise.then(()=>{
-                canvas.style.transition = "opacity 0.8s ease";
                 canvas.style.opacity = 1;
             });
         });
