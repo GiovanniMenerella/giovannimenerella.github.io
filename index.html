@@ -45,10 +45,11 @@ body, html {
     color: #fff;
     font-size: 2.6rem;
     font-weight: 500;
-    letter-spacing: 4px;
-    font-stretch: semi-condensed; /* elegante e leggermente schiacciato */
+    letter-spacing: 2px; /* più compatto */
+    font-stretch: ultra-condensed; /* più stretto */
+    transform: scaleX(0.85); /* schiacciato orizzontalmente */
     opacity: 0;
-    transform: translateY(12px);
+    transform-origin: center;
     filter: blur(6px);
     animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
@@ -58,7 +59,7 @@ body, html {
     color: rgba(255,255,255,0.7);
     font-size: 1.5rem;
     letter-spacing: 10px; /* più spazio tra le lettere */
-    margin-top: 28px; /* posizionata leggermente più sotto il nome */
+    margin-top: 28px; /* leggermente più sotto il nome */
     opacity: 0;
     transform: translateY(10px);
     animation: roleIn 1.8s ease forwards;
@@ -66,16 +67,15 @@ body, html {
 }
 
 /* ANIMAZIONI ENTRATA */
-
 @keyframes nameIn {
     0% {
         opacity: 0;
-        transform: translateY(12px);
+        transform: translateY(12px) scaleX(0.85);
         filter: blur(6px);
     }
     100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scaleX(0.85);
         filter: blur(0);
     }
 }
@@ -112,7 +112,6 @@ body, html {
 }
 
 /* ================= PDF ================= */
-
 #pdf-container {
     width: 100%;
     margin: 0;
@@ -148,8 +147,8 @@ canvas {
 
     .name {
         font-size: 2rem;
-        letter-spacing: 3px;
-        font-stretch: semi-condensed;
+        letter-spacing: 1px;
+        transform: scaleX(0.8);
     }
 
     .role {
@@ -176,7 +175,6 @@ canvas {
 <div id="pdf-container"></div>
 
 <script>
-
 const url = "Portfolio.pdf";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -198,31 +196,22 @@ pdfjsLib.getDocument(url).promise.then(pdf => {
 
     /* RENDER PDF */
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-
         pdf.getPage(pageNumber).then(page => {
-
             const scale = window.innerWidth < 768 ? 2.2 : 3;
             const viewport = page.getViewport({ scale });
-
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
-
             canvas.height = viewport.height;
             canvas.width = viewport.width;
-
             container.appendChild(canvas);
-
             page.render({
                 canvasContext: context,
                 viewport: viewport
             });
-
         });
-
     }
 
 });
-
 </script>
 </body>
 </html>
