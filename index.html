@@ -16,10 +16,9 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #fff; /* 🔥 bianco subito */
+    background: #fff;
     overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
-    -webkit-font-smoothing: antialiased;
 }
 
 /* ================= LOADER ================= */
@@ -27,7 +26,7 @@ body, html {
 #loader {
     position: fixed;
     inset: 0;
-    background: #fff; /* 🔥 stesso bianco */
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -38,90 +37,84 @@ body, html {
     text-align: center;
 }
 
-/* NOME */
+/* TESTO */
 .name {
     color: #000;
     font-size: 2.6rem;
     font-weight: 700;
-    letter-spacing: 4px; 
-    opacity: 0;
-    transform: translateY(12px);
-    filter: blur(6px);
-    animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    letter-spacing: 4px;
 }
 
-/* SOTTOTITOLO */
 .role {
     color: rgba(0,0,0,0.7);
     font-size: 1.5rem;
-    letter-spacing: 10px; 
-    margin-top: 28px; 
-    opacity: 0;
-    transform: translateY(10px);
-    animation: roleIn 1.8s ease forwards;
-    animation-delay: 1.5s;
+    letter-spacing: 10px;
+    margin-top: 28px;
 }
 
-/* ANIMAZIONI ENTRATA */
-@keyframes nameIn {
+/* 🔥 DISSOLVENZA VERSO BIANCO */
+#loader.exit .loader-inner {
+    animation: textFadeOut 1.2s ease forwards;
+}
+
+@keyframes textFadeOut {
     0% {
-        opacity: 0;
-        transform: translateY(12px);
-        filter: blur(6px);
-    }
-    100% {
         opacity: 1;
-        transform: translateY(0);
         filter: blur(0);
     }
-}
-
-@keyframes roleIn {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-        letter-spacing: 0px;
-    }
     100% {
-        opacity: 1;
-        transform: translateY(0);
-        letter-spacing: 10px;
+        opacity: 0;
+        filter: blur(10px);
     }
 }
 
-/* USCITA */
+/* loader resta bianco, poi sparisce */
 #loader.exit {
-    animation: fadeOut 1.2s ease forwards;
+    animation: loaderFade 0.6s ease forwards;
+    animation-delay: 1.2s;
 }
 
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+@keyframes loaderFade {
+    to {
+        opacity: 0;
+    }
 }
 
 /* ================= PDF ================= */
+
 #pdf-container {
     width: 100%;
-    margin: 0;
     padding: 10px 0;
     box-sizing: border-box;
-    background: #fff; /* 🔥 stesso bianco */
+    background: #fff;
+
     opacity: 0;
-    transition: opacity 1s ease;
+    transform: translateY(40px); /* 🔥 partenza più in basso */
 }
 
+/* 🔥 ENTRATA CON SCORRIMENTO */
 #pdf-container.show {
-    opacity: 1;
+    animation: pdfEnter 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes pdfEnter {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 canvas {
     display: block;
     width: 100%;
     height: auto;
-    margin: 0 0 20px 0;
+    margin-bottom: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    background: transparent;
 }
 
 /* MOBILE */
@@ -134,12 +127,6 @@ canvas {
         margin-top: 20px;
         letter-spacing: 6px;
         font-size: 1.3rem;
-    }
-    #pdf-container {
-        padding: 5px;
-    }
-    canvas {
-        margin-bottom: 10px;
     }
 }
 
@@ -169,24 +156,34 @@ const container = document.getElementById("pdf-container");
 
 pdfjsLib.getDocument(url).promise.then(pdf => {
 
+    // 🔥 Sequenza cinematografica
     setTimeout(() => {
         document.getElementById("loader").classList.add("exit");
-        document.getElementById("pdf-container").classList.add("show");
-    }, 3000);
+    }, 2000);
 
+    // dopo il bianco → entra il PDF
+    setTimeout(() => {
+        document.getElementById("pdf-container").classList.add("show");
+    }, 3200);
+
+    // rimuovi loader
     setTimeout(() => {
         document.getElementById("loader").remove();
-    }, 4200);
+    }, 4000);
 
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
             const scale = window.innerWidth < 768 ? 2.2 : 3;
             const viewport = page.getViewport({ scale });
+
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
+
             canvas.height = viewport.height;
             canvas.width = viewport.width;
+
             container.appendChild(canvas);
+
             page.render({
                 canvasContext: context,
                 viewport: viewport
