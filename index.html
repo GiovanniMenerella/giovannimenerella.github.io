@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-    <title>Portfolio</title>
+    <title>Portfolio - Giovanni Menerella</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
@@ -15,7 +15,6 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            /* Lo sfondo della pagina rimane nero */
             background: #000; 
             overflow-x: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
@@ -23,11 +22,9 @@
         }
 
         /* ================= LOADER ================= */
-
         #loader {
             position: fixed;
             inset: 0;
-            /* MODIFICA: Sfondo bianco solo per il loader */
             background: #fff; 
             display: flex;
             align-items: center;
@@ -39,9 +36,7 @@
             text-align: center;
         }
 
-        /* NOME */
         .name {
-            /* MODIFICA: Testo nero per contrasto su bianco */
             color: #000; 
             font-size: 2.6rem;
             font-weight: 700;
@@ -52,9 +47,7 @@
             animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
         }
 
-        /* SOTTOTITOLO */
         .role {
-            /* MODIFICA: Testo grigio scuro per contrasto su bianco */
             color: rgba(0, 0, 0, 0.6); 
             font-size: 1.5rem;
             letter-spacing: 10px; 
@@ -62,63 +55,38 @@
             opacity: 0;
             transform: translateY(10px);
             animation: roleIn 1.8s ease forwards;
-            animation-delay: 1.5s;
+            animation-delay: 1.2s;
         }
 
-        /* ANIMAZIONI ENTRATA */
         @keyframes nameIn {
-            0% {
-                opacity: 0;
-                transform: translateY(12px);
-                filter: blur(6px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-                filter: blur(0);
-            }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
         @keyframes roleIn {
-            0% {
-                opacity: 0;
-                transform: translateY(10px);
-                letter-spacing: 0px;
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-                letter-spacing: 10px;
-            }
+            to { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
         }
 
         /* USCITA CINEMATOGRAFICA */
         #loader.exit {
             animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            pointer-events: none;
         }
 
         @keyframes zoomOut {
-            0% {
-                transform: scale(1);
-                filter: blur(0);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1.12);
-                filter: blur(10px);
-                opacity: 0;
-            }
+            0% { transform: scale(1); opacity: 1; filter: blur(0); }
+            100% { transform: scale(1.12); opacity: 0; filter: blur(10px); }
         }
 
-        /* ================= PDF ================= */
+        /* ================= PDF CONTAINER ================= */
         #pdf-container {
             width: 100%;
-            margin: 0;
-            padding: 10px 0;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             opacity: 0;
             transform: scale(1.04);
             transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            padding: 10px 0;
         }
 
         #pdf-container.show {
@@ -127,32 +95,19 @@
         }
 
         canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            margin: 0 0 20px 0;
+            max-width: 100%;
+            height: auto !important;
+            margin-bottom: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             background: transparent;
         }
 
-        /* MOBILE */
         @media (max-width:768px){
-            .name {
-                font-size: 1.8rem;
-                letter-spacing: 2px;
-            }
-            .role {
-                margin-top: 20px;
-                letter-spacing: 6px;
-                font-size: 1.3rem;
-            }
-            #pdf-container {
-                padding: 5px;
-            }
-            canvas {
-                margin-bottom: 10px;
-            }
+            .name { font-size: 1.8rem; letter-spacing: 2px; }
+            .role { font-size: 1.3rem; letter-spacing: 6px; margin-top: 20px; }
+            #pdf-container { padding: 5px; }
+            canvas { margin-bottom: 10px; }
         }
     </style>
 </head>
@@ -170,39 +125,61 @@
 
     <script>
         const url = "Portfolio.pdf";
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         const container = document.getElementById("pdf-container");
 
-        pdfjsLib.getDocument(url).promise.then(pdf => {
+        async function init() {
+            // Avviamo il timer di 4 secondi
+            const timerPromise = new Promise(resolve => setTimeout(resolve, 4000));
+            
+            // Avviamo il caricamento del PDF
+            const pdfPromise = pdfjsLib.getDocument(url).promise;
 
-            setTimeout(() => {
+            try {
+                // Aspettiamo che ENTRAMBI siano completati (minimo 4 secondi)
+                const [pdf] = await Promise.all([pdfPromise, timerPromise]);
+
+                // 1. Avvia animazione uscita loader
                 document.getElementById("loader").classList.add("exit");
                 document.getElementById("pdf-container").classList.add("show");
-            }, 4000);
 
-            setTimeout(() => {
-                document.getElementById("loader").remove();
-            }, 5500);
+                // 2. Rimuovi il loader dal DOM dopo l'animazione di zoomOut
+                setTimeout(() => {
+                    const ldr = document.getElementById("loader");
+                    if(ldr) ldr.remove();
+                }, 1500);
 
-            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                pdf.getPage(pageNumber).then(page => {
-                    const scale = window.innerWidth < 768 ? 2.2 : 3;
+                // 3. Rendering sequenziale delle pagine per non saturare la RAM (fondamentale per 19MB)
+                for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                    const page = await pdf.getPage(pageNumber);
+                    
+                    const isMobile = window.innerWidth < 768;
+                    const scale = isMobile ? 1.6 : 2.5; 
+                    
                     const viewport = page.getViewport({ scale });
                     const canvas = document.createElement("canvas");
                     const context = canvas.getContext("2d");
+
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
                     container.appendChild(canvas);
-                    page.render({
+
+                    await page.render({
                         canvasContext: context,
                         viewport: viewport
-                    });
-                });
+                    }).promise;
+
+                    page.cleanup();
+                }
+            } catch (error) {
+                console.error("Errore:", error);
+                // In caso di errore, rimuoviamo comunque il loader per mostrare la pagina
+                document.getElementById("loader").remove();
             }
-        });
+        }
+
+        init();
     </script>
 </body>
 </html>
