@@ -66,7 +66,7 @@
             to { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
         }
 
-        /* USCITA CINEMATOGRAFICA */
+        /* USCITA LOADER */
         #loader.exit {
             animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             pointer-events: none;
@@ -77,21 +77,25 @@
             100% { transform: scale(1.12); opacity: 0; filter: blur(10px); }
         }
 
-        /* ================= PDF CONTAINER ================= */
+        /* ================= PDF CONTAINER (CON EFFETTI RIPRISTINATI) ================= */
         #pdf-container {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            opacity: 0;
-            transform: scale(1.04);
-            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
             padding: 10px 0;
+            
+            /* Stato iniziale per l'effetto zoom e scorrimento */
+            opacity: 0;
+            transform: scale(1.04) translateY(30px);
+            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            visibility: hidden;
         }
 
         #pdf-container.show {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
+            visibility: visible;
         }
 
         canvas {
@@ -130,27 +134,27 @@
         const container = document.getElementById("pdf-container");
 
         async function init() {
-            // Avviamo il timer di 4 secondi
+            // Timer forzato di 4 secondi
             const timerPromise = new Promise(resolve => setTimeout(resolve, 4000));
             
-            // Avviamo il caricamento del PDF
+            // Caricamento PDF
             const pdfPromise = pdfjsLib.getDocument(url).promise;
 
             try {
-                // Aspettiamo che ENTRAMBI siano completati (minimo 4 secondi)
+                // Aspetta entrambi
                 const [pdf] = await Promise.all([pdfPromise, timerPromise]);
 
-                // 1. Avvia animazione uscita loader
+                // Attiva animazioni di uscita loader ed entrata PDF
                 document.getElementById("loader").classList.add("exit");
-                document.getElementById("pdf-container").classList.add("show");
+                container.classList.add("show");
 
-                // 2. Rimuovi il loader dal DOM dopo l'animazione di zoomOut
+                // Pulizia del loader dopo l'animazione
                 setTimeout(() => {
                     const ldr = document.getElementById("loader");
                     if(ldr) ldr.remove();
                 }, 1500);
 
-                // 3. Rendering sequenziale delle pagine per non saturare la RAM (fondamentale per 19MB)
+                // Rendering sequenziale (Ottimo per file da 19MB)
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const page = await pdf.getPage(pageNumber);
                     
@@ -174,7 +178,6 @@
                 }
             } catch (error) {
                 console.error("Errore:", error);
-                // In caso di errore, rimuoviamo comunque il loader per mostrare la pagina
                 document.getElementById("loader").remove();
             }
         }
