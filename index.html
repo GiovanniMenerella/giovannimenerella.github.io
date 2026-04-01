@@ -10,23 +10,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <style>
-        /* RESET & TEMA BIANCO */
+        /* RESET */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
-            background: #ffffff; /* Sfondo Bianco */
-            color: #000000;      /* Testo Nero */
+            /* Lo sfondo della pagina rimane nero */
+            background: #000; 
             overflow-x: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
         /* ================= LOADER ================= */
+
         #loader {
             position: fixed;
             inset: 0;
-            background: #ffffff;
+            /* MODIFICA: Sfondo bianco solo per il loader */
+            background: #fff; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -37,8 +39,10 @@
             text-align: center;
         }
 
+        /* NOME */
         .name {
-            color: #000;
+            /* MODIFICA: Testo nero per contrasto su bianco */
+            color: #000; 
             font-size: 2.6rem;
             font-weight: 700;
             letter-spacing: 4px; 
@@ -48,8 +52,10 @@
             animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
         }
 
+        /* SOTTOTITOLO */
         .role {
-            color: rgba(0, 0, 0, 0.5); /* Grigio scuro per contrasto */
+            /* MODIFICA: Testo grigio scuro per contrasto su bianco */
+            color: rgba(0, 0, 0, 0.6); 
             font-size: 1.5rem;
             letter-spacing: 10px; 
             margin-top: 28px; 
@@ -59,158 +65,144 @@
             animation-delay: 1.5s;
         }
 
+        /* ANIMAZIONI ENTRATA */
         @keyframes nameIn {
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+                filter: blur(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
         }
 
         @keyframes roleIn {
-            100% { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+                letter-spacing: 0px;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+                letter-spacing: 10px;
+            }
         }
 
+        /* USCITA CINEMATOGRAFICA */
         #loader.exit {
-            animation: zoomOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            pointer-events: none;
+            animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         @keyframes zoomOut {
-            100% { transform: scale(1.1); filter: blur(10px); opacity: 0; }
+            0% {
+                transform: scale(1);
+                filter: blur(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.12);
+                filter: blur(10px);
+                opacity: 0;
+            }
         }
 
-        /* ================= PDF CONTAINER ================= */
+        /* ================= PDF ================= */
         #pdf-container {
             width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px 0;
+            margin: 0;
+            padding: 10px 0;
             box-sizing: border-box;
             opacity: 0;
-            transition: opacity 1s ease;
+            transform: scale(1.04);
+            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
         #pdf-container.show {
             opacity: 1;
+            transform: scale(1);
         }
 
         canvas {
             display: block;
             width: 100%;
             height: auto;
-            margin: 0 auto 30px auto;
-            border-radius: 4px;
-            /* Ombra più leggera per sfondo bianco */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            background: #f9f9f9;
-            /* Ottimizzazione rendering */
-            content-visibility: auto;
-            contain-intrinsic-size: 1px 800px;
+            margin: 0 0 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            background: transparent;
         }
 
         /* MOBILE */
         @media (max-width:768px){
-            .name { font-size: 1.6rem; letter-spacing: 2px; }
-            .role { margin-top: 15px; letter-spacing: 5px; font-size: 1.1rem; }
-            #pdf-container { padding: 10px; }
-            canvas { margin-bottom: 15px; }
+            .name {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .role {
+                margin-top: 20px;
+                letter-spacing: 6px;
+                font-size: 1.3rem;
+            }
+            #pdf-container {
+                padding: 5px;
+            }
+            canvas {
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div id="loader">
-    <div class="loader-inner">
-        <h1 class="name">GIOVANNI MENERELLA</h1>
-        <p class="role">PORTFOLIO</p>
+    <div id="loader">
+        <div class="loader-inner">
+            <h1 class="name">GIOVANNI MENERELLA</h1>
+            <p class="role">PORTFOLIO</p>
+        </div>
     </div>
-</div>
 
-<div id="pdf-container"></div>
+    <div id="pdf-container"></div>
 
-<script>
-/** * CONFIGURAZIONE 
- */
-const url = "Portfolio.pdf"; 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    <script>
+        const url = "Portfolio.pdf";
 
-const container = document.getElementById("pdf-container");
-let pdfDoc = null;
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-/**
- * FUNZIONE DI RENDERING SINGOLA PAGINA
- */
-async function renderPage(num, canvas) {
-    // Evita di ri-renderizzare se la pagina è già pronta
-    if (canvas.dataset.loaded === "true") return;
+        const container = document.getElementById("pdf-container");
 
-    const page = await pdfDoc.getPage(num);
-    const isMobile = window.innerWidth < 768;
-    
-    // Scale 1.5 per mobile (leggero), 2.5 per desktop (nitido)
-    const scale = isMobile ? 1.5 : 2.5; 
-    const viewport = page.getViewport({ scale });
-    
-    const context = canvas.getContext("2d");
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
+        pdfjsLib.getDocument(url).promise.then(pdf => {
 
-    await page.render({
-        canvasContext: context,
-        viewport: viewport
-    }).promise;
+            setTimeout(() => {
+                document.getElementById("loader").classList.add("exit");
+                document.getElementById("pdf-container").classList.add("show");
+            }, 4000);
 
-    canvas.dataset.loaded = "true";
-}
+            setTimeout(() => {
+                document.getElementById("loader").remove();
+            }, 5500);
 
-/**
- * INIZIALIZZAZIONE DOCUMENTO
- */
-pdfjsLib.getDocument(url).promise.then(async (pdf) => {
-    pdfDoc = pdf;
-    
-    // 1. Creiamo i "gusci" (canvas) per tutte le 33 pagine subito
-    // Questo permette lo scroll fluido anche se le immagini non sono ancora cariche
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const canvas = document.createElement("canvas");
-        canvas.dataset.pageNumber = i;
-        container.appendChild(canvas);
-
-        // 2. Setup IntersectionObserver: carica la pagina quando entra nel mirino
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const pageNum = parseInt(entry.target.dataset.pageNumber);
-                    renderPage(pageNum, entry.target);
-                    // Una volta caricata, smettiamo di osservarla per risparmiare CPU
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { 
-            rootMargin: "600px" // Inizia a caricare la pagina 600px prima che appaia
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                pdf.getPage(pageNumber).then(page => {
+                    const scale = window.innerWidth < 768 ? 2.2 : 3;
+                    const viewport = page.getViewport({ scale });
+                    const canvas = document.createElement("canvas");
+                    const context = canvas.getContext("2d");
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    container.appendChild(canvas);
+                    page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    });
+                });
+            }
         });
-
-        observer.observe(canvas);
-    }
-
-    // 3. Carichiamo la PRIMA pagina immediatamente per sbloccare il loader
-    const firstCanvas = container.querySelector('canvas[data-page-number="1"]');
-    await renderPage(1, firstCanvas);
-
-    // 4. Nascondiamo il loader con un piccolo delay per eleganza
-    setTimeout(() => {
-        document.getElementById("loader").classList.add("exit");
-        document.getElementById("pdf-container").classList.add("show");
-    }, 500);
-
-    // Rimuoviamo il loader dal DOM dopo l'animazione
-    setTimeout(() => {
-        document.getElementById("loader")?.remove();
-    }, 2000);
-
-}).catch(err => {
-    console.error("Errore PDF:", err);
-    document.querySelector(".name").innerText = "ERRORE CARICAMENTO";
-});
-</script>
-
+    </script>
 </body>
 </html>
