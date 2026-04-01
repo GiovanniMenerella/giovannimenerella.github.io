@@ -2,187 +2,208 @@
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Portfolio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<title>Portfolio</title>
 
-    <style>
-        /* RESET */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            background: #fff;
-            overflow-x: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-        /* ================= LOADER ================= */
-        #loader {
-            position: fixed;
-            inset: 0;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
+<style>
 
-        .loader-inner { text-align: center; }
+/* RESET */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: #000;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
 
-        .name {
-            color: #000;
-            font-size: 2.6rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            opacity: 0;
-            transform: translateY(12px);
-            filter: blur(6px);
-            animation: nameIn 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
-        }
+/* ================= LOADER ================= */
 
-        .role {
-            color: rgba(0,0,0,0.7);
-            font-size: 1.5rem;
-            letter-spacing: 10px; 
-            margin-top: 28px; 
-            opacity: 0;
-            transform: translateY(10px);
-            animation: roleIn 1.2s ease forwards;
-            animation-delay: 0.5s;
-        }
+#loader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
 
-        @keyframes nameIn {
-            0% { opacity: 0; transform: translateY(12px); filter: blur(6px); }
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
+.loader-inner {
+    text-align: center;
+}
 
-        @keyframes roleIn {
-            0% { opacity: 0; transform: translateY(10px); letter-spacing: 0px; }
-            100% { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
-        }
+/* NOME */
+.name {
+    color: #fff;
+    font-size: 2.6rem;
+    font-weight: 700; /* grassetto */
+    letter-spacing: 4px; 
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(6px);
+    animation: nameIn 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
 
-        #loader.exit {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(1.05);
-        }
+/* SOTTOTITOLO */
+.role {
+    color: rgba(255,255,255,0.7);
+    font-size: 1.5rem;
+    letter-spacing: 10px; 
+    margin-top: 28px; 
+    opacity: 0;
+    transform: translateY(10px);
+    animation: roleIn 1.8s ease forwards;
+    animation-delay: 1.5s;
+}
 
-        /* ================= PDF CONTAINER ================= */
-        #pdf-container {
-            width: 100%;
-            max-width: 900px; /* Limite opzionale per desktop */
-            margin: 0 auto;
-            padding: 10px;
-            box-sizing: border-box;
-            opacity: 0;
-            transition: opacity 1s ease;
-            background: #fff;
-        }
+/* ANIMAZIONI ENTRATA */
+@keyframes nameIn {
+    0% {
+        opacity: 0;
+        transform: translateY(12px);
+        filter: blur(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
 
-        #pdf-container.show { opacity: 1; }
+@keyframes roleIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+        letter-spacing: 0px;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: 10px;
+    }
+}
 
-        canvas {
-            display: block;
-            width: 100% !important;
-            height: auto !important;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            image-rendering: -webkit-optimize-contrast; /* Più nitido su iOS */
-        }
+/* USCITA CINEMATOGRAFICA */
+#loader.exit {
+    animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 
-        @media (max-width:768px){
-            .name { font-size: 1.8rem; letter-spacing: 2px; }
-            .role { margin-top: 15px; letter-spacing: 5px; font-size: 1.1rem; }
-            #pdf-container { padding: 8px; }
-        }
-    </style>
+@keyframes zoomOut {
+    0% {
+        transform: scale(1);
+        filter: blur(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.12);
+        filter: blur(10px);
+        opacity: 0;
+    }
+}
+
+/* ================= PDF ================= */
+#pdf-container {
+    width: 100%;
+    margin: 0;
+    padding: 10px 0;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+#pdf-container.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    background: transparent;
+}
+
+/* MOBILE */
+@media (max-width:768px){
+    .name {
+        font-size: 1.8rem;  /* più piccolo su smartphone */
+        letter-spacing: 2px; /* meno spazio tra le lettere */
+    }
+    .role {
+        margin-top: 20px;
+        letter-spacing: 6px;
+        font-size: 1.3rem;
+    }
+    #pdf-container {
+        padding: 5px;
+    }
+    canvas {
+        margin-bottom: 10px;
+    }
+}
+
+</style>
 </head>
 
 <body>
 
-    <div id="loader">
-        <div class="loader-inner">
-            <h1 class="name">GIOVANNI MENERELLA</h1>
-            <p class="role">PORTFOLIO</p>
-        </div>
+<!-- LOADER -->
+<div id="loader">
+    <div class="loader-inner">
+        <h1 class="name">GIOVANNI MENERELLA</h1>
+        <p class="role">PORTFOLIO</p>
     </div>
+</div>
 
-    <div id="pdf-container"></div>
+<!-- PDF -->
+<div id="pdf-container"></div>
 
-    <script>
-        const url = "Portfolio.pdf"; 
-        
-        // Configurazione Worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+<script>
+const url = "Portfolio.pdf";
 
-        const container = document.getElementById("pdf-container");
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-        async function initPDF() {
-            try {
-                const loadingTask = pdfjsLib.getDocument(url);
-                const pdf = await loadingTask.promise;
+const container = document.getElementById("pdf-container");
 
-                // Funzione per nascondere il loader
-                const revealContent = () => {
-                    const loader = document.getElementById("loader");
-                    if (loader) {
-                        loader.classList.add("exit");
-                        container.classList.add("show");
-                        setTimeout(() => loader.remove(), 1000);
-                    }
-                };
+pdfjsLib.getDocument(url).promise.then(pdf => {
 
-                // Rendering sequenziale delle pagine
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    
-                    // Gestione intelligente della risoluzione (max 2x per evitare crash RAM)
-                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                    const originalViewport = page.getViewport({ scale: 1 });
-                    
-                    // Calcola scala basata sulla larghezza dello schermo
-                    const scale = (container.clientWidth / originalViewport.width) * dpr;
-                    const viewport = page.getViewport({ scale });
+    setTimeout(() => {
+        document.getElementById("loader").classList.add("exit");
+        document.getElementById("pdf-container").classList.add("show");
+    }, 4000);
 
-                    // Crea Canvas
-                    const canvas = document.createElement("canvas");
-                    const context = canvas.getContext("2d", { alpha: false }); // Ottimizzazione memoria
-                    
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    container.appendChild(canvas);
+    setTimeout(() => {
+        document.getElementById("loader").remove();
+    }, 5500);
 
-                    // Renderizza la pagina
-                    await page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    }).promise;
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(page => {
+            const scale = window.innerWidth < 768 ? 2.2 : 3;
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            container.appendChild(canvas);
+            page.render({
+                canvasContext: context,
+                viewport: viewport
+            });
+        });
+    }
 
-                    // Pulizia memoria pagina corrente
-                    page.cleanup();
-
-                    // Appena la prima pagina è pronta, mostra il contenuto
-                    if (i === 1) {
-                        // Piccolo delay per godersi l'animazione del loader
-                        setTimeout(revealContent, 1500);
-                    }
-                }
-            } catch (err) {
-                console.error("Errore caricamento PDF: ", err);
-                // In caso di errore, rimuoviamo comunque il loader
-                document.getElementById("loader").remove();
-            }
-        }
-
-        // Avvia il processo
-        window.addEventListener('load', initPDF);
-    </script>
-
+});
+</script>
 </body>
 </html>
