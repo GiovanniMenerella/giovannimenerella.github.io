@@ -170,38 +170,56 @@ canvas {
 const url = "Portfolio.pdf";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const container = document.getElementById("pdf-container");
 
-pdfjsLib.getDocument(url).promise.then(pdf => {
+async function renderPDF() {
+    try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
 
-    setTimeout(() => {
-        document.getElementById("loader").classList.add("exit");
-        document.getElementById("pdf-container").classList.add("show");
-    }, 4000);
+        // Gestione Loader e Apparizione Container
+        setTimeout(() => {
+            document.getElementById("loader").classList.add("exit");
+            document.getElementById("pdf-container").classList.add("show");
+        }, 3000);
 
-    setTimeout(() => {
-        document.getElementById("loader").remove();
-    }, 5500);
+        setTimeout(() => {
+            const loader = document.getElementById("loader");
+            if (loader) loader.remove();
+        }, 4500);
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-        pdf.getPage(pageNumber).then(page => {
-            const scale = window.innerWidth < 768 ? 2.2 : 3;
+        // Rendering sequenziale delle pagine
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+            const page = await pdf.getPage(pageNumber);
+            
+            // Ridotto leggermente lo scale per mobile (da 2.2 a 1.7) per risparmiare RAM
+            const isMobile = window.innerWidth < 768;
+            const scale = isMobile ? 1.7 : 2.5; 
+            
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
+
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             container.appendChild(canvas);
-            page.render({
+
+            // Attendiamo che la pagina sia effettivamente renderizzata prima di passare alla prossima
+            await page.render({
                 canvasContext: context,
                 viewport: viewport
-            });
-        });
-    }
+            }).promise;
 
-});
+            // Opzionale: pulizia memoria della pagina
+            page.cleanup();
+        }
+    } catch (error) {
+        console.error("Errore durante il caricamento del PDF:", error);
+    }
+}
+
+// Avvia il processo
+renderPDF();
 </script>
-</body>
 </html>
