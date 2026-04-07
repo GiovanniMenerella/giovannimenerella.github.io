@@ -16,7 +16,7 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100%;
-    background: #fff; /* Cambiato da #000 a #fff */
+    background: #000;
     overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -27,7 +27,7 @@ body, html {
 #loader {
     position: fixed;
     inset: 0;
-    background: #fff; /* Cambiato da #000 a #fff */
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,9 +40,9 @@ body, html {
 
 /* NOME */
 .name {
-    color: #000; /* Cambiato da #fff a #000 */
+    color: #fff;
     font-size: 2.6rem;
-    font-weight: 700; 
+    font-weight: 700; /* grassetto */
     letter-spacing: 4px; 
     opacity: 0;
     transform: translateY(12px);
@@ -52,7 +52,7 @@ body, html {
 
 /* SOTTOTITOLO */
 .role {
-    color: rgba(0,0,0,0.6); /* Cambiato da bianco trasparente a nero trasparente */
+    color: rgba(255,255,255,0.7);
     font-size: 1.5rem;
     letter-spacing: 10px; 
     margin-top: 28px; 
@@ -129,15 +129,15 @@ canvas {
     height: auto;
     margin: 0 0 20px 0;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Ombra resa più leggera per sfondo bianco */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     background: transparent;
 }
 
 /* MOBILE */
 @media (max-width:768px){
     .name {
-        font-size: 1.8rem; 
-        letter-spacing: 2px; 
+        font-size: 1.8rem;  /* più piccolo su smartphone */
+        letter-spacing: 2px; /* meno spazio tra le lettere */
     }
     .role {
         margin-top: 20px;
@@ -157,6 +157,7 @@ canvas {
 
 <body>
 
+<!-- LOADER -->
 <div id="loader">
     <div class="loader-inner">
         <h1 class="name">GIOVANNI MENERELLA</h1>
@@ -164,62 +165,45 @@ canvas {
     </div>
 </div>
 
+<!-- PDF -->
 <div id="pdf-container"></div>
 
 <script>
 const url = "Portfolio.pdf";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const container = document.getElementById("pdf-container");
 
-async function renderPDF() {
-    try {
-        const pdf = await pdfjsLib.getDocument(url).promise;
+pdfjsLib.getDocument(url).promise.then(pdf => {
 
-        // Gestione Loader e Apparizione Container
-        setTimeout(() => {
-            document.getElementById("loader").classList.add("exit");
-            document.getElementById("pdf-container").classList.add("show");
-        }, 3000);
+    setTimeout(() => {
+        document.getElementById("loader").classList.add("exit");
+        document.getElementById("pdf-container").classList.add("show");
+    }, 4000);
 
-        setTimeout(() => {
-            const loader = document.getElementById("loader");
-            if (loader) loader.remove();
-        }, 4500);
+    setTimeout(() => {
+        document.getElementById("loader").remove();
+    }, 5500);
 
-        // Rendering sequenziale delle pagine
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-            const page = await pdf.getPage(pageNumber);
-            
-            // Ridotto leggermente lo scale per mobile (da 2.2 a 1.7) per risparmiare RAM
-            const isMobile = window.innerWidth < 768;
-            const scale = isMobile ? 1.7 : 2.5; 
-            
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(page => {
+            const scale = window.innerWidth < 768 ? 2.2 : 3;
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
-
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             container.appendChild(canvas);
-
-            // Attendiamo che la pagina sia effettivamente renderizzata prima di passare alla prossima
-            await page.render({
+            page.render({
                 canvasContext: context,
                 viewport: viewport
-            }).promise;
-
-            // Opzionale: pulizia memoria della pagina
-            page.cleanup();
-        }
-    } catch (error) {
-        console.error("Errore durante il caricamento del PDF:", error);
+            });
+        });
     }
-}
 
-// Avvia il processo
-renderPDF();
+});
 </script>
+</body>
 </html>
