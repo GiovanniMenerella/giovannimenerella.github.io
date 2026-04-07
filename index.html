@@ -16,11 +16,11 @@
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
         }
 
-        /* ================= LOADER ================= */
+        /* ================= LOADER (BIANCO) ================= */
         #loader {
             position: fixed;
             inset: 0;
-            background: #fff;
+            background: #fff; /* Sfondo Bianco come richiesto */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -29,7 +29,7 @@
 
         .loader-inner { text-align: center; }
         .name {
-            color: #000;
+            color: #000; /* Testo Nero */
             font-size: 2.6rem;
             font-weight: 700;
             letter-spacing: 4px; 
@@ -60,22 +60,23 @@
         }
 
         #loader.exit {
-            animation: zoomOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: zoomOut 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             pointer-events: none;
         }
         @keyframes zoomOut {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.1); filter: blur(10px); opacity: 0; }
+            100% { transform: scale(1.15); filter: blur(15px); opacity: 0; }
         }
 
-        /* ================= PDF CONTAINER (EFFETTO ZOOM) ================= */
+        /* ================= PDF CONTAINER (EFFETTO SCROLL + ZOOM) ================= */
         #pdf-container {
             width: 100%;
-            padding: 20px 15px; /* Crea lo spazio dai bordi */
+            padding: 20px 15px;
             box-sizing: border-box;
             opacity: 0;
-            transform: scale(1.04); /* Effetto zoom-in iniziale */
-            transition: all 1.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            /* L'effetto di scroll verso l'alto è dato da translateY(40px) */
+            transform: translateY(40px) scale(1.05); 
+            transition: all 1.6s cubic-bezier(0.22, 1, 0.36, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -83,17 +84,17 @@
 
         #pdf-container.show {
             opacity: 1;
-            transform: scale(1); /* Torna alla dimensione normale */
+            transform: translateY(0) scale(1); /* Torna in posizione e dimensione naturale */
         }
 
         canvas {
             display: block;
             width: 100%;
-            max-width: 900px; /* Evita che diventi troppo enorme su desktop */
+            max-width: 900px;
             height: auto;
             margin-bottom: 30px;
-            border-radius: 12px; /* BORDI ARROTONDATI */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); /* OMBRA PROFONDA */
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9);
             background: #111;
         }
 
@@ -101,7 +102,6 @@
             .name { font-size: 1.8rem; letter-spacing: 2px; }
             .role { letter-spacing: 5px; font-size: 1.2rem; }
             #pdf-container { padding: 15px 10px; }
-            canvas { border-radius: 8px; margin-bottom: 15px; }
         }
     </style>
 </head>
@@ -126,30 +126,34 @@ async function renderPDF() {
     try {
         const pdf = await pdfjsLib.getDocument(url).promise;
         
+        // Renderizziamo le pagine
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
-            
-            // Scaliamo a 2x per mantenere nitidezza senza pesare troppo
             const viewport = page.getViewport({ scale: 2 });
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
-
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             container.appendChild(canvas);
-
             await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-            // Mostra il portfolio non appena la prima pagina è pronta
-            if (i === 1) {
-                setTimeout(() => {
-                    document.getElementById("loader").classList.add("exit");
-                    container.classList.add("show");
-                }, 800);
-            }
         }
+
+        // RIPRISTINO TIMER 4 SECONDI
+        // Indipendentemente da quanto ci mette il PDF, l'animazione parte dopo 4s
+        setTimeout(() => {
+            document.getElementById("loader").classList.add("exit");
+            document.getElementById("pdf-container").classList.add("show");
+        }, 4000);
+
+        // Pulizia DOM dopo che l'animazione è finita
+        setTimeout(() => {
+            document.getElementById("loader").remove();
+        }, 5500);
+
     } catch (error) {
         console.error("Errore:", error);
+        // In caso di errore, rimuoviamo comunque il loader per non bloccare l'utente
+        document.getElementById("loader").remove();
     }
 }
 
