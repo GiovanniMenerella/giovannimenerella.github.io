@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -8,34 +7,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <style>
-        /* RESET */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
-            background: #000; /* Sfondo finale nero per il PDF */
+            background: #000;
             overflow-x: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
-            -webkit-font-smoothing: antialiased;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
         }
 
-        /* ================= LOADER (INVERTITO) ================= */
+        /* ================= LOADER ================= */
         #loader {
             position: fixed;
             inset: 0;
-            background: #fff; /* SFONDO BIANCO */
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
         }
 
-        .loader-inner {
-            text-align: center;
-        }
-
+        .loader-inner { text-align: center; }
         .name {
-            color: #000; /* TESTO NERO */
+            color: #000;
             font-size: 2.6rem;
             font-weight: 700;
             letter-spacing: 4px; 
@@ -46,66 +40,71 @@
         }
 
         .role {
-            color: rgba(0, 0, 0, 0.6); /* TESTO GRIGIO SCURO/NERO */
+            color: rgba(0, 0, 0, 0.5);
             font-size: 1.5rem;
             letter-spacing: 10px; 
-            margin-top: 28px; 
+            margin-top: 24px; 
             opacity: 0;
             transform: translateY(10px);
             animation: roleIn 1.8s ease forwards;
-            animation-delay: 1.5s;
+            animation-delay: 1.2s;
         }
 
         @keyframes nameIn {
             0% { opacity: 0; transform: translateY(12px); filter: blur(6px); }
             100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-
         @keyframes roleIn {
             0% { opacity: 0; transform: translateY(10px); letter-spacing: 0px; }
-            100% { opacity: 1; letter-spacing: 10px; opacity: 1; transform: translateY(0); }
+            100% { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
         }
 
         #loader.exit {
             animation: zoomOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             pointer-events: none;
         }
-
         @keyframes zoomOut {
             0% { transform: scale(1); opacity: 1; }
             100% { transform: scale(1.1); filter: blur(10px); opacity: 0; }
         }
 
-        /* ================= PDF CONTAINER ================= */
+        /* ================= PDF CONTAINER (EFFETTO ZOOM) ================= */
         #pdf-container {
             width: 100%;
-            background: #000; /* Sfondo PDF nero */
-            padding: 10px 0;
+            padding: 20px 15px; /* Crea lo spazio dai bordi */
             box-sizing: border-box;
             opacity: 0;
-            transition: opacity 1s ease;
+            transform: scale(1.04); /* Effetto zoom-in iniziale */
+            transition: all 1.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #pdf-container.show {
             opacity: 1;
+            transform: scale(1); /* Torna alla dimensione normale */
         }
 
         canvas {
             display: block;
             width: 100%;
-            max-width: 100%;
+            max-width: 900px; /* Evita che diventi troppo enorme su desktop */
             height: auto;
-            margin: 0 auto 20px auto;
-            background: #000;
+            margin-bottom: 30px;
+            border-radius: 12px; /* BORDI ARROTONDATI */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); /* OMBRA PROFONDA */
+            background: #111;
         }
 
         @media (max-width:768px){
-            .name { font-size: 1.6rem; letter-spacing: 2px; }
-            .role { margin-top: 15px; letter-spacing: 5px; font-size: 1.1rem; }
+            .name { font-size: 1.8rem; letter-spacing: 2px; }
+            .role { letter-spacing: 5px; font-size: 1.2rem; }
+            #pdf-container { padding: 15px 10px; }
+            canvas { border-radius: 8px; margin-bottom: 15px; }
         }
     </style>
 </head>
-
 <body>
 
 <div id="loader">
@@ -127,17 +126,11 @@ async function renderPDF() {
     try {
         const pdf = await pdfjsLib.getDocument(url).promise;
         
-        // Rimuoviamo il loader non appena il PDF è caricato e la prima pagina è pronta
-        const totalPages = pdf.numPages;
-
-        for (let i = 1; i <= totalPages; i++) {
+        for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             
-            // OTTIMIZZAZIONE: Scala ridotta per mobile per risparmiare RAM
-            const isMobile = window.innerWidth < 768;
-            const scale = isMobile ? 1.5 : 2.5; 
-            
-            const viewport = page.getViewport({ scale });
+            // Scaliamo a 2x per mantenere nitidezza senza pesare troppo
+            const viewport = page.getViewport({ scale: 2 });
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
 
@@ -147,16 +140,16 @@ async function renderPDF() {
 
             await page.render({ canvasContext: context, viewport: viewport }).promise;
 
-            // Al termine del rendering della PRIMA pagina, iniziamo a mostrare il contenuto
+            // Mostra il portfolio non appena la prima pagina è pronta
             if (i === 1) {
                 setTimeout(() => {
                     document.getElementById("loader").classList.add("exit");
                     container.classList.add("show");
-                }, 1000);
+                }, 800);
             }
         }
     } catch (error) {
-        console.error("Errore nel caricamento PDF:", error);
+        console.error("Errore:", error);
     }
 }
 
