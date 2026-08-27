@@ -17,7 +17,7 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            background: #000; /* Lo sfondo generale resta nero */
+            background: #000;
             overflow-x: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
             -webkit-font-smoothing: antialiased;
@@ -27,7 +27,7 @@
         #loader {
             position: fixed;
             inset: 0;
-            background: #fff; /* Sfondo invertito: Bianco */
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -40,7 +40,7 @@
 
         /* NOME */
         .name {
-            color: #000; /* Testo invertito: Nero */
+            color: #000;
             font-size: 2.6rem;
             font-weight: 700;
             letter-spacing: 4px; 
@@ -52,7 +52,7 @@
 
         /* SOTTOTITOLO */
         .role {
-            color: rgba(0, 0, 0, 0.6); /* Testo invertito: Grigio scuro/Nero */
+            color: rgba(0, 0, 0, 0.6);
             font-size: 1.5rem;
             letter-spacing: 10px; 
             margin-top: 28px; 
@@ -150,9 +150,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
             pointer-events: auto;
+            transform-origin: top left;
         }
 
         .annotationLayer a {
@@ -212,50 +211,61 @@
                 if(loader) loader.remove();
             }, 5500);
 
-            // Renderizzazione ordinata pagina per pagina per preservare i link
+            // Renderizzazione sequenziale di tutte le pagine
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                const page = await pdf.getPage(pageNumber);
-                
-                const scale = 1.8; 
-                const viewport = page.getViewport({ scale });
+                try {
+                    const page = await pdf.getPage(pageNumber);
+                    
+                    const scale = 1.8; 
+                    const viewport = page.getViewport({ scale });
 
-                // Wrapper contenitore
-                const wrapper = document.createElement("div");
-                wrapper.className = "page-wrapper";
-                wrapper.style.width = viewport.width + "px";
-                wrapper.style.height = viewport.height + "px";
+                    // Wrapper contenitore
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "page-wrapper";
 
-                // Canvas per l'immagine
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                    // Canvas per l'immagine
+                    const canvas = document.createElement("canvas");
+                    const context = canvas.getContext("2d");
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                wrapper.appendChild(canvas);
+                    wrapper.appendChild(canvas);
 
-                // Div per gli elementi interattivi (Link cliccabili)
-                const annotationLayerDiv = document.createElement("div");
-                annotationLayerDiv.className = "annotationLayer";
-                wrapper.appendChild(annotationLayerDiv);
+                    // Div per gli elementi interattivi (Link cliccabili)
+                    const annotationLayerDiv = document.createElement("div");
+                    annotationLayerDiv.className = "annotationLayer";
+                    annotationLayerDiv.style.width = viewport.width + "px";
+                    annotationLayerDiv.style.height = viewport.height + "px";
+                    wrapper.appendChild(annotationLayerDiv);
 
-                container.appendChild(wrapper);
+                    container.appendChild(wrapper);
 
-                // Render dell'immagine
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
+                    // Render dell'immagine sulla pagina
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
 
-                // Render dei link sopra l'immagine
-                const annotations = await page.getAnnotations();
-                pdfjsLib.AnnotationLayer.render({
-                    viewport: viewport.clone({ dontFlip: true }),
-                    div: annotationLayerDiv,
-                    annotations: annotations,
-                    page: page,
-                    linkService: null,
-                    downloadManager: null
-                });
+                    // Render dei link (se presenti) senza bloccare l'esecuzione in caso di errore
+                    try {
+                        const annotations = await page.getAnnotations();
+                        if (annotations && annotations.length > 0) {
+                            pdfjsLib.AnnotationLayer.render({
+                                viewport: viewport.clone({ dontFlip: true }),
+                                div: annotationLayerDiv,
+                                annotations: annotations,
+                                page: page,
+                                linkService: null,
+                                downloadManager: null
+                            });
+                        }
+                    } catch (annotErr) {
+                        console.warn("Nessun link o errore sul layer annotazioni per pagina " + pageNumber, annotErr);
+                    }
+
+                } catch (pageErr) {
+                    console.error("Errore nel rendering della pagina " + pageNumber, pageErr);
+                }
             }
         }).catch(err => {
             console.error("Errore nel caricamento del PDF: ", err);
