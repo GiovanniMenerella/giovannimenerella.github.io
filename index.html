@@ -108,17 +108,21 @@
             opacity: 1;
         }
 
-        /* Animazione specifica per la prima pagina (Zoom + Scroll/Salita dal basso) */
+        /* EFFETTO ACCENTUATO SULLA PRIMA PAGINA */
         .page-box:first-child {
             opacity: 0;
-            transform: translateY(40px) scale(1.04);
-            transition: opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), 
-                        transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            /* Parte più in basso (120px) e più ingrandita (1.10) con una leggera sfocatura iniziale */
+            transform: translateY(120px) scale(1.10);
+            filter: blur(4px);
+            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        filter 1.2s ease;
         }
 
         .page-box:first-child.animate-in {
             opacity: 1;
             transform: translateY(0) scale(1);
+            filter: blur(0);
         }
 
         canvas {
@@ -171,12 +175,11 @@
         const selectionScreen = document.getElementById("selection-screen");
 
         function loadPortfolio(url) {
-            // Fai sparire lo schermo bianco con la transizione sfocata
             selectionScreen.classList.add("exit");
 
             pdfjsLib.getDocument(url).promise.then(async pdf => {
                 
-                // 1. Pre-allocazione dei contenitori
+                // 1. Allocazione contenitori
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const pageBox = document.createElement("div");
                     pageBox.className = "page-box";
@@ -184,7 +187,7 @@
                     container.appendChild(pageBox);
                 }
 
-                // 2. Caricamento e rendering prima pagina
+                // 2. Rendering prima pagina
                 const firstPage = await pdf.getPage(1);
                 const scale = 1.8;
                 const viewport = firstPage.getViewport({ scale });
@@ -202,18 +205,17 @@
                     viewport: viewport
                 }).promise;
 
-                // Rimozione definitiva dello schermo intro
+                // Rimozione schermata bianca
                 setTimeout(() => {
                     selectionScreen.remove();
                 }, 800);
 
-                // 3. Attivazione dell'effetto Zoom & Scroll dal basso sulla prima pagina
-                requestAnimationFrame(() => {
+                // 3. Lancio dell'animazione marcata di salita e zoom
+                setTimeout(() => {
                     firstBox.classList.add("animate-in");
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
+                }, 50);
 
-                // 4. Rendering in background delle pagine successive
+                // 4. Caricamento in sequenza delle altre pagine
                 for (let pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
                     const page = await pdf.getPage(pageNumber);
                     const pageBox = document.getElementById("page-box-" + pageNumber);
@@ -229,7 +231,7 @@
                         viewport: page.getViewport({ scale })
                     }).promise;
 
-                    // Link interattivi (specialmente per l'ultima pagina)
+                    // Gestione link
                     const annotations = await page.getAnnotations();
                     if (annotations.length > 0) {
                         const layer = document.createElement("div");
