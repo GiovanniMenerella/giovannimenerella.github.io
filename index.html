@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-    <title>Portfolio</title>
+    <title>Portfolio - Giovanni Menerella</title>
 
+    <!-- PDF.js e CSS per abilitare l'interattività dei link (Annotation Layer) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
 
     <style>
         /* RESET */
@@ -115,6 +117,9 @@
             transform: scale(1.04);
             transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
             background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #pdf-container.show {
@@ -122,14 +127,36 @@
             transform: scale(1);
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            margin: 0 0 20px 0;
+        /* Contenitore singola pagina per sovrapporre Canvas + Link */
+        .page-wrapper {
+            position: relative;
+            margin-bottom: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
             background: transparent;
+        }
+
+        /* Layer interattivo dei link */
+        .annotationLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: auto;
+        }
+
+        .annotationLayer a {
+            cursor: pointer;
         }
 
         /* MOBILE */
@@ -146,7 +173,7 @@
             #pdf-container {
                 padding: 5px;
             }
-            canvas {
+            .page-wrapper {
                 margin-bottom: 10px;
             }
         }
@@ -172,9 +199,9 @@
 
         const container = document.getElementById("pdf-container");
 
-        pdfjsLib.getDocument(url).promise.then(pdf => {
+        pdfjsLib.getDocument(url).promise.then(async pdf => {
 
-            // Manteniamo i tempi originali di uscita del loader
+            // Gestione dei tempi di uscita del loader
             setTimeout(() => {
                 document.getElementById("loader").classList.add("exit");
                 document.getElementById("pdf-container").classList.add("show");
@@ -185,26 +212,49 @@
                 if(loader) loader.remove();
             }, 5500);
 
-            // Renderizzazione ottimizzata
+            // Renderizzazione ordinata pagina per pagina per preservare i link
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                pdf.getPage(pageNumber).then(page => {
-                    // Scala ridotta a 1.8 per ottimizzare i 20MB di file, specialmente su mobile
-                    const scale = 1.8; 
-                    const viewport = page.getViewport({ scale });
-                    
-                    const canvas = document.createElement("canvas");
-                    const context = canvas.getContext("2d");
-                    
-                    // Impostiamo le dimensioni interne del canvas
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    
-                    container.appendChild(canvas);
-                    
-                    page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    });
+                const page = await pdf.getPage(pageNumber);
+                
+                const scale = 1.8; 
+                const viewport = page.getViewport({ scale });
+
+                // Wrapper contenitore
+                const wrapper = document.createElement("div");
+                wrapper.className = "page-wrapper";
+                wrapper.style.width = viewport.width + "px";
+                wrapper.style.height = viewport.height + "px";
+
+                // Canvas per l'immagine
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                wrapper.appendChild(canvas);
+
+                // Div per gli elementi interattivi (Link cliccabili)
+                const annotationLayerDiv = document.createElement("div");
+                annotationLayerDiv.className = "annotationLayer";
+                wrapper.appendChild(annotationLayerDiv);
+
+                container.appendChild(wrapper);
+
+                // Render dell'immagine
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                // Render dei link sopra l'immagine
+                const annotations = await page.getAnnotations();
+                pdfjsLib.AnnotationLayer.render({
+                    viewport: viewport.clone({ dontFlip: true }),
+                    div: annotationLayerDiv,
+                    annotations: annotations,
+                    page: page,
+                    linkService: null,
+                    downloadManager: null
                 });
             }
         }).catch(err => {
