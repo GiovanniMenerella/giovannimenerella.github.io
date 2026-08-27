@@ -1,238 +1,284 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giovanni Menerella - Portfolio</title>
-  
-  <!-- PDF.js per la gestione avanzata e i link cliccabili -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Giovanni Menerella - Portfolio</title>
 
-    body {
-      background-color: #000000;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
+    <!-- PDF.js per la gestione avanzata delle pagine e dei link interattivi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-    /* Schermata di selezione iniziale */
-    #selection-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      z-index: 10;
-      background-color: #000000;
-    }
-
-    .option-btn {
-      font-size: 1.2rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: #ffffff;
-      cursor: pointer;
-      opacity: 0;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Animazioni minimali all'entrata */
-    .fade-up {
-      animation: fadeInUp 1.2s ease-out forwards;
-    }
-
-    .fade-down {
-      animation: fadeInDown 1.2s ease-out forwards;
-    }
-
-    /* 2 cm corrispondono a circa 75px sui display standard */
-    @keyframes fadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(0);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(-75px);
-      }
-    }
-
-    @keyframes fadeInDown {
-      0% {
-        opacity: 0;
-        transform: translateY(0);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(75px);
-      }
-    }
-
-    /* Contenitore PDF */
-    #pdf-container {
-      display: none;
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px 10px;
-      background-color: #000000;
-    }
-
-    .pdf-page-wrapper {
-      position: relative;
-      margin-bottom: 2mm; /* Spazio di 2mm tra le pagine */
-      border-radius: 12px; /* Angoli arrotondati */
-      overflow: hidden;
-      background-color: #111111;
-      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    /* Layer trasparente per i link interattivi del PDF */
-    .annotationLayer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-
-    .annotationLayer a {
-      position: absolute;
-      font-size: 1em;
-      color: transparent;
-      cursor: pointer;
-    }
-
-    /* Indicatore di caricamento */
-    #loading {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 0.9rem;
-      letter-spacing: 2px;
-      color: #888888;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Menu Selezione -->
-  <div id="selection-screen">
-    <div class="option-btn fade-up" onclick="loadPDF('Portfolio mobile.pdf')">versione mobile</div>
-    <div class="option-btn fade-down" onclick="loadPDF('Portfolio desktop.pdf')">versione dekstop</div>
-  </div>
-
-  <div id="loading">CARICAMENTO...</div>
-
-  <!-- Viewer PDF -->
-  <div id="pdf-container"></div>
-
-  <script>
-    // Configurazione worker PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    async function loadPDF(filename) {
-      // Nascondi menu e mostra caricamento
-      document.getElementById('selection-screen').style.display = 'none';
-      document.getElementById('loading').style.display = 'block';
-
-      const container = document.getElementById('pdf-container');
-      container.style.display = 'block';
-
-      try {
-        const pdf = await pdfjsLib.getDocument(filename).promise;
-        document.getElementById('loading').style.display = 'none';
-
-        // Renderizza tutte le pagine
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-          
-          const wrapper = document.createElement('div');
-          wrapper.className = 'pdf-page-wrapper';
-
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-
-          // Scala di resa ad alta risoluzione
-          const viewport = page.getViewport({ scale: 2.0 });
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          wrapper.appendChild(canvas);
-
-          // Layer per supportare i link nell'ultima pagina
-          const annotationLayerDiv = document.createElement('div');
-          annotationLayerDiv.className = 'annotationLayer';
-          wrapper.appendChild(annotationLayerDiv);
-
-          container.appendChild(wrapper);
-
-          // Render del canvas
-          await page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise;
-
-          // Render dei link cliccabili
-          const annotations = await page.getAnnotations();
-          pdfjsLib.renderTextLayer; 
-          
-          annotations.forEach(annotation => {
-            if (annotation.subtype === 'Link' && annotation.url) {
-              const link = document.createElement('a');
-              link.href = annotation.url;
-              link.target = '_blank';
-              
-              // Calcolo posizione relativa del link
-              const rect = viewport.convertToViewportRectangle(annotation.rect);
-              const left = Math.min(rect[0], rect[2]);
-              const top = Math.min(rect[1], rect[3]);
-              const width = Math.abs(rect[0] - rect[2]);
-              const height = Math.abs(rect[1] - rect[3]);
-
-              link.style.left = (left / viewport.width * 100) + '%';
-              link.style.top = ((viewport.height - top) / viewport.height * 100) + '%';
-              link.style.width = (width / viewport.width * 100) + '%';
-              link.style.height = (height / viewport.height * 100) + '%';
-
-              annotationLayerDiv.appendChild(link);
-            }
-          });
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        // Animazione di scroll iniziale dal basso verso l'alto
-        setTimeout(() => {
-          window.scrollTo({ top: 120, behavior: 'instant' });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100);
+        body, html {
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
 
-      } catch (error) {
-        console.error('Errore nel caricamento del PDF:', error);
-        alert('Impossibile caricare il file PDF. Assicurati che il nome del file sia corretto.');
-      }
-    }
-  </script>
+        /* ================= SELEZIONE / INTRO (SFONDO BIANCO) ================= */
+        #selection-screen {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            z-index: 9999;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s ease;
+        }
+
+        #selection-screen.exit {
+            opacity: 0;
+            filter: blur(10px);
+            pointer-events: none;
+        }
+
+        .option-btn {
+            color: #000000;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            opacity: 0;
+        }
+
+        /* Animazioni di entrata che allontanano le opzioni in verticale (~2cm / 75px) */
+        .fade-up {
+            animation: fadeAndMoveUp 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        .fade-down {
+            animation: fadeAndMoveDown 1.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadeAndMoveUp {
+            0% {
+                opacity: 0;
+                transform: translateY(0);
+                filter: blur(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(-38px); /* Allontanamento verso l'alto */
+                filter: blur(0);
+            }
+        }
+
+        @keyframes fadeAndMoveDown {
+            0% {
+                opacity: 0;
+                transform: translateY(0);
+                filter: blur(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(38px); /* Allontanamento verso il basso */
+                filter: blur(0);
+            }
+        }
+
+        /* Indicatore di caricamento */
+        #loading-text {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000000;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 10000;
+        }
+
+        /* ================= CONTENITORE PDF ================= */
+        #pdf-container {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 5px;
+            background: #000000;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        #pdf-container.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Singola pagina PDF */
+        .pdf-page-wrapper {
+            position: relative;
+            margin-bottom: 2mm; /* 2mm di spazio tra una pagina e l'altra */
+            border-radius: 8px; /* Angoli arrotondati */
+            overflow: hidden;
+            background: #000000;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Strato trasparente sovrapposto per registrare i link dell'ultima pagina */
+        .annotationLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .annotationLayer a {
+            position: absolute;
+            pointer-events: auto;
+            color: transparent;
+            cursor: pointer;
+        }
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            .option-btn {
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+            #pdf-container {
+                padding: 5px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Schermata di selezione iniziale -->
+    <div id="selection-screen">
+        <div class="option-btn fade-up" onclick="loadPortfolio('mobile.pdf')">VERSIONE MOBILE</div>
+        <div class="option-btn fade-down" onclick="loadPortfolio('desktop.pdf')">VERSIONE DESKTOP</div>
+    </div>
+
+    <!-- Scritta caricamento -->
+    <div id="loading-text">CARICAMENTO...</div>
+
+    <!-- Visualizzatore PDF -->
+    <div id="pdf-container"></div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+        async function loadPortfolio(filename) {
+            // Nascondiamo i bottoni e mostriamo il testo di caricamento
+            const selectionScreen = document.getElementById("selection-screen");
+            const loadingText = document.getElementById("loading-text");
+            const container = document.getElementById("pdf-container");
+
+            selectionScreen.querySelectorAll('.option-btn').forEach(btn => btn.style.display = 'none');
+            loadingText.style.display = "block";
+
+            try {
+                // Carica il file PDF scelto
+                const pdf = await pdfjsLib.getDocument(filename).promise;
+                
+                // Mostra il contenitore del PDF nel DOM
+                container.style.display = "block";
+
+                // Renderizza tutte le pagine
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "pdf-page-wrapper";
+
+                    const canvas = document.createElement("canvas");
+                    const context = canvas.getContext("2d");
+
+                    // Scala di rendering per una qualità nitida sia mobile che desktop
+                    const scale = 2.0; 
+                    const viewport = page.getViewport({ scale });
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    wrapper.appendChild(canvas);
+
+                    // Crea layer per i link dell'ultima pagina
+                    const annotationLayerDiv = document.createElement("div");
+                    annotationLayerDiv.className = "annotationLayer";
+                    wrapper.appendChild(annotationLayerDiv);
+
+                    container.appendChild(wrapper);
+
+                    // Render della pagina sul canvas
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    // Estrazione dei link ipertestuali
+                    const annotations = await page.getAnnotations();
+                    annotations.forEach(annotation => {
+                        if (annotation.subtype === 'Link' && annotation.url) {
+                            const link = document.createElement('a');
+                            link.href = annotation.url;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                            
+                            // Calcolo posizione rettangolo cliccabile
+                            const rect = viewport.convertToViewportRectangle(annotation.rect);
+                            const left = Math.min(rect[0], rect[2]);
+                            const top = Math.min(rect[1], rect[3]);
+                            const width = Math.abs(rect[0] - rect[2]);
+                            const height = Math.abs(rect[1] - rect[3]);
+
+                            link.style.left = (left / viewport.width * 100) + '%';
+                            link.style.top = ((viewport.height - top) / viewport.height * 100) + '%';
+                            link.style.width = (width / viewport.width * 100) + '%';
+                            link.style.height = (height / viewport.height * 100) + '%';
+
+                            annotationLayerDiv.appendChild(link);
+                        }
+                    });
+                }
+
+                // Avvia la transizione del Loader ed entrata dinamica del PDF
+                selectionScreen.classList.add("exit");
+                setTimeout(() => {
+                    selectionScreen.style.display = "none";
+                    loadingText.style.display = "none";
+                    container.classList.add("show");
+                }, 600);
+
+            } catch (err) {
+                console.error("Errore nel caricamento del PDF: ", err);
+                alert("Impossibile caricare il file. Verifica che i file si chiamino mobile.pdf e desktop.pdf");
+                loadingText.style.display = "none";
+                selectionScreen.querySelectorAll('.option-btn').forEach(btn => btn.style.display = 'block');
+            }
+        }
+    </script>
 </body>
 </html>
