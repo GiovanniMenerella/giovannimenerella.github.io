@@ -35,7 +35,7 @@
             justify-content: center;
             gap: 25px;
             z-index: 9999;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s ease;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), filter 1s ease;
         }
 
         #selection-screen.exit {
@@ -98,21 +98,27 @@
             margin: 0;
             padding: 10px 0;
             box-sizing: border-box;
-            opacity: 0;
-            transform: scale(1.04);
-            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
             background: #000;
-        }
-
-        #pdf-container.show {
-            opacity: 1;
-            transform: scale(1);
         }
 
         .page-box {
             position: relative;
             width: 100%;
             margin-bottom: 2mm;
+            opacity: 1;
+        }
+
+        /* Animazione specifica per la prima pagina (Zoom + Scroll/Salita dal basso) */
+        .page-box:first-child {
+            opacity: 0;
+            transform: translateY(40px) scale(1.04);
+            transition: opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), 
+                        transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .page-box:first-child.animate-in {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
 
         canvas {
@@ -144,9 +150,6 @@
             #pdf-container {
                 padding: 5px;
             }
-            .page-box {
-                margin-bottom: 2mm;
-            }
         }
     </style>
 </head>
@@ -168,18 +171,12 @@
         const selectionScreen = document.getElementById("selection-screen");
 
         function loadPortfolio(url) {
-            // Animazione di uscita loader ed entrata PDF (stessi tempi del tuo file originale)
+            // Fai sparire lo schermo bianco con la transizione sfocata
             selectionScreen.classList.add("exit");
-            container.classList.add("show");
 
-            setTimeout(() => {
-                selectionScreen.remove();
-            }, 1400);
-
-            // Caricamento PDF originale esatto
             pdfjsLib.getDocument(url).promise.then(async pdf => {
                 
-                // Creiamo prima i contenitori per mantenere l'ordine esatto delle pagine
+                // 1. Pre-allocazione dei contenitori
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const pageBox = document.createElement("div");
                     pageBox.className = "page-box";
@@ -187,27 +184,52 @@
                     container.appendChild(pageBox);
                 }
 
-                // Renderizziamo pagina per pagina in sequenza corretta
-                for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                // 2. Caricamento e rendering prima pagina
+                const firstPage = await pdf.getPage(1);
+                const scale = 1.8;
+                const viewport = firstPage.getViewport({ scale });
+                
+                const firstBox = document.getElementById("page-box-1");
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                firstBox.appendChild(canvas);
+                
+                await firstPage.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                // Rimozione definitiva dello schermo intro
+                setTimeout(() => {
+                    selectionScreen.remove();
+                }, 800);
+
+                // 3. Attivazione dell'effetto Zoom & Scroll dal basso sulla prima pagina
+                requestAnimationFrame(() => {
+                    firstBox.classList.add("animate-in");
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                // 4. Rendering in background delle pagine successive
+                for (let pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
                     const page = await pdf.getPage(pageNumber);
-                    const scale = 1.8; 
-                    const viewport = page.getViewport({ scale });
-                    
                     const pageBox = document.getElementById("page-box-" + pageNumber);
-                    const canvas = document.createElement("canvas");
-                    const context = canvas.getContext("2d");
+                    const pageCanvas = document.createElement("canvas");
+                    const pageContext = pageCanvas.getContext("2d");
                     
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    
-                    pageBox.appendChild(canvas);
+                    pageCanvas.height = page.getViewport({ scale }).height;
+                    pageCanvas.width = page.getViewport({ scale }).width;
+                    pageBox.appendChild(pageCanvas);
                     
                     await page.render({
-                        canvasContext: context,
-                        viewport: viewport
+                        canvasContext: pageContext,
+                        viewport: page.getViewport({ scale })
                     }).promise;
 
-                    // Aggiunta link solo se presenti nella pagina
+                    // Link interattivi (specialmente per l'ultima pagina)
                     const annotations = await page.getAnnotations();
                     if (annotations.length > 0) {
                         const layer = document.createElement("div");
@@ -221,16 +243,16 @@
                                 link.target = '_blank';
                                 link.rel = 'noopener noreferrer';
 
-                                const rect = viewport.convertToViewportRectangle(annotation.rect);
+                                const rect = page.getViewport({ scale }).convertToViewportRectangle(annotation.rect);
                                 const left = Math.min(rect[0], rect[2]);
                                 const top = Math.min(rect[1], rect[3]);
                                 const width = Math.abs(rect[0] - rect[2]);
                                 const height = Math.abs(rect[1] - rect[3]);
 
-                                link.style.left = (left / viewport.width * 100) + '%';
-                                link.style.top = ((viewport.height - top) / viewport.height * 100) + '%';
-                                link.style.width = (width / viewport.width * 100) + '%';
-                                link.style.height = (height / viewport.height * 100) + '%';
+                                link.style.left = (left / page.getViewport({ scale }).width * 100) + '%';
+                                link.style.top = ((page.getViewport({ scale }).height - top) / page.getViewport({ scale }).height * 100) + '%';
+                                link.style.width = (width / page.getViewport({ scale }).width * 100) + '%';
+                                link.style.height = (height / page.getViewport({ scale }).height * 100) + '%';
 
                                 layer.appendChild(link);
                             }
