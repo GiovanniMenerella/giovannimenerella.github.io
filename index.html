@@ -19,12 +19,12 @@
             width: 100%;
             height: 100%;
             background: #000000;
-            overflow-x: hidden;
+            overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO BIANCA CON NOME */
+        /* SCHERMATA INTRO BIANCA */
         #loader {
             position: fixed;
             inset: 0;
@@ -78,46 +78,52 @@
             100% { opacity: 1; transform: translateY(0); letter-spacing: 8px; }
         }
 
-        /* CONTENITORE PDF */
+        /* CONTENITORE PDF PER DESKTOP (ORIZZONTALE) */
         #pdf-container {
-            display: block;
-            width: 100%;
-            margin: 0;
-            padding: 10px 0;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            width: 100vw;
+            height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
             background: #000;
+            align-items: center;
+        }
+
+        /* NASCONDE LA BARRA DI SCORRIMENTO */
+        #pdf-container::-webkit-scrollbar {
+            display: none;
+        }
+        #pdf-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .page-box {
             position: relative;
-            width: 100%;
-            margin-bottom: 2mm;
-            opacity: 1;
+            flex: 0 0 auto;
+            height: 92vh;
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* EFFETTO ENTRATA PRIMA PAGINA */
         .page-box:first-child {
-            opacity: 0;
-            transform: translateY(120px) scale(1.10);
-            filter: blur(4px);
-            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-                        filter 1.2s ease;
+            margin-left: 40px;
         }
 
-        .page-box:first-child.animate-in {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0);
+        .page-box:last-child {
+            margin-right: 40px;
         }
 
         canvas {
             display: block;
-            width: 100%;
-            height: auto;
+            height: 100%;
+            width: auto;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            background: transparent;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
 
         .annotationLayer {
@@ -132,23 +138,84 @@
             color: transparent;
         }
 
+        /* PULSANTI DI NAVIGAZIONE ORIZZONTALE */
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            transition: background 0.3s, transform 0.2s, opacity 0.3s;
+            user-select: none;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        #prev-btn { left: 25px; }
+        #next-btn { right: 25px; }
+
+        /* IMPAGINAZIONE MOBILE (RIPRISTINA LO SCORRIMENTO VERTICALE SU SMARTPHONE) */
         @media (max-width: 768px) {
+            body, html {
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            #pdf-container {
+                display: block;
+                width: 100%;
+                height: auto;
+                overflow: visible;
+                padding: 5px;
+            }
+
+            .page-box {
+                width: 100%;
+                height: auto;
+                margin: 0 0 10px 0 !important;
+            }
+
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+
+            .nav-btn {
+                display: none; /* Nasconde i pulsanti su smartphone dove si usa il touch */
+            }
+
             .name { font-size: 1.6rem; letter-spacing: 2px; }
             .role { font-size: 1rem; letter-spacing: 4px; }
-            #pdf-container { padding: 5px; }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- Intro Schermata Bianca -->
     <div id="loader">
         <div class="loader-inner">
             <h1 class="name">GIOVANNI MENERELLA</h1>
             <p class="role">PORTFOLIO</p>
         </div>
     </div>
+
+    <!-- Pulsanti di navigazione orizzontale -->
+    <button id="prev-btn" class="nav-btn" aria-label="Pagina precedente">&#10094;</button>
+    <button id="next-btn" class="nav-btn" aria-label="Pagina successiva">&#10095;</button>
 
     <div id="pdf-container"></div>
 
@@ -158,17 +225,15 @@
 
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
 
-        // 1. RILEVAMENTO AUTOMATICO DISPOSITIVO (Mobile vs Desktop)
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
         const pdfUrl = isMobile ? "mobile.pdf" : "desktop.pdf";
-
-        // Scala ottimizzata: 1.2 su mobile per evitare il crash di memoria RAM, 1.8 su desktop
         const scale = isMobile ? 1.2 : 1.8;
 
         pdfjsLib.getDocument(pdfUrl).promise.then(async pdf => {
             
-            // Pre-allocazione contenitori pagine
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                 const pageBox = document.createElement("div");
                 pageBox.className = "page-box";
@@ -176,52 +241,24 @@
                 container.appendChild(pageBox);
             }
 
-            // Rendering prima pagina
-            const firstPage = await pdf.getPage(1);
-            const viewport = firstPage.getViewport({ scale });
-            
-            const firstBox = document.getElementById("page-box-1");
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-            
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            firstBox.appendChild(canvas);
-            
-            await firstPage.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            // Rimuovi la schermata intro bianca
-            setTimeout(() => {
-                loader.classList.add("exit");
-                setTimeout(() => loader.remove(), 1000);
-            }, 1200);
-
-            // Avvia effetto zoom/salita sulla prima pagina
-            setTimeout(() => {
-                firstBox.classList.add("animate-in");
-            }, 300);
-
-            // Rendering sequenziale pagine successive
-            for (let pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
+            // Rendering sequenziale delle pagine
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                 const page = await pdf.getPage(pageNumber);
-                const pageViewport = page.getViewport({ scale });
+                const viewport = page.getViewport({ scale });
                 const pageBox = document.getElementById("page-box-" + pageNumber);
-                const pageCanvas = document.createElement("canvas");
-                const pageContext = pageCanvas.getContext("2d");
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
                 
-                pageCanvas.height = pageViewport.height;
-                pageCanvas.width = pageViewport.width;
-                pageBox.appendChild(pageCanvas);
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                pageBox.appendChild(canvas);
                 
                 await page.render({
-                    canvasContext: pageContext,
-                    viewport: pageViewport
+                    canvasContext: context,
+                    viewport: viewport
                 }).promise;
 
-                // Gestione link nell'ultima pagina
+                // Gestione link per l'ultima pagina
                 const annotations = await page.getAnnotations();
                 if (annotations.length > 0) {
                     const layer = document.createElement("div");
@@ -235,25 +272,61 @@
                             link.target = '_blank';
                             link.rel = 'noopener noreferrer';
 
-                            const rect = pageViewport.convertToViewportRectangle(annotation.rect);
+                            const rect = viewport.convertToViewportRectangle(annotation.rect);
                             const left = Math.min(rect[0], rect[2]);
                             const top = Math.min(rect[1], rect[3]);
                             const width = Math.abs(rect[0] - rect[2]);
                             const height = Math.abs(rect[1] - rect[3]);
 
-                            link.style.left = (left / pageViewport.width * 100) + '%';
-                            link.style.top = ((pageViewport.height - top) / pageViewport.height * 100) + '%';
-                            link.style.width = (width / pageViewport.width * 100) + '%';
-                            link.style.height = (height / pageViewport.height * 100) + '%';
+                            link.style.left = (left / viewport.width * 100) + '%';
+                            link.style.top = ((viewport.height - top) / viewport.height * 100) + '%';
+                            link.style.width = (width / viewport.width * 100) + '%';
+                            link.style.height = (height / viewport.height * 100) + '%';
 
                             layer.appendChild(link);
                         }
                     });
                 }
+
+                // Rimuovi lo schermo iniziale dopo il caricamento della prima pagina
+                if (pageNumber === 1) {
+                    setTimeout(() => {
+                        loader.classList.add("exit");
+                        setTimeout(() => loader.remove(), 1000);
+                    }, 1000);
+                }
             }
         }).catch(err => {
             console.error("Errore nel caricamento del PDF: ", err);
         });
+
+        // GESTIONE CONTROLLI E SCORRIMENTO ORIZZONTALE
+        const scrollAmount = () => window.innerWidth * 0.75; // Distanza di scorrimento ad ogni click
+
+        nextBtn.addEventListener("click", () => {
+            container.scrollBy({ left: scrollAmount(), behavior: "smooth" });
+        });
+
+        prevBtn.addEventListener("click", () => {
+            container.scrollBy({ left: -scrollAmount(), behavior: "smooth" });
+        });
+
+        // Navigazione da tastiera tramite freccia Destra e Sinistra
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight") {
+                container.scrollBy({ left: scrollAmount(), behavior: "smooth" });
+            } else if (e.key === "ArrowLeft") {
+                container.scrollBy({ left: -scrollAmount(), behavior: "smooth" });
+            }
+        });
+
+        // Trasforma il movimento della rotellina del mouse verticale in scorrimento orizzontale su PC
+        container.addEventListener("wheel", (e) => {
+            if (!isMobile && e.deltaY !== 0) {
+                e.preventDefault();
+                container.scrollBy({ left: e.deltaY * 2.5, behavior: "auto" });
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
