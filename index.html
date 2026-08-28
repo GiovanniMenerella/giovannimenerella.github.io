@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON BARRA DI CARICAMENTO */
+        /* SCHERMATA INTRO NERA CON BARRA DI CARICAMENTO 5PX */
         #loader {
             position: fixed;
             inset: 0;
@@ -44,9 +44,9 @@
 
         .loader-bar-container {
             width: 240px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
             overflow: hidden;
         }
 
@@ -54,8 +54,13 @@
             width: 0%;
             height: 100%;
             background: #ffffff;
-            border-radius: 4px;
-            transition: width 0.3s ease-out;
+            border-radius: 3px;
+            animation: fillProgress 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fillProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
         }
 
         /* TRACK SLIDER DESKTOP */
@@ -113,6 +118,8 @@
             border-radius: 4px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.9);
             object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
         /* STRATO LINK CLICCABILI */
@@ -233,7 +240,7 @@
 
 <body>
 
-    <!-- Intro Schermata Nera con Barra Bianco 8px -->
+    <!-- Intro Schermata Nera con Barra Bianco 5px -->
     <div id="loader">
         <div class="loader-bar-container">
             <div id="loader-bar-fill" class="loader-bar-fill"></div>
@@ -254,7 +261,6 @@
 
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
-        const loaderBarFill = document.getElementById("loader-bar-fill");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -265,6 +271,14 @@
 
         let currentPage = 1;
         let totalPages = 0;
+        let pdfLoaded = false;
+        let timerFinished = false;
+
+        // Timer di 4 secondi per l'animazione della barra
+        setTimeout(() => {
+            timerFinished = true;
+            checkAndStartIntro();
+        }, 4000);
 
         function updateNavigation() {
             if (isMobile) return;
@@ -274,12 +288,24 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
+        function checkAndStartIntro() {
+            if (pdfLoaded && timerFinished) {
+                loader.classList.add("exit");
+                const firstBox = document.getElementById("page-box-1");
+                setTimeout(() => {
+                    if (firstBox) firstBox.classList.add("animate-in");
+                }, 150);
+                setTimeout(() => loader.remove(), 800);
+            }
+        }
+
         pdfjsLib.getDocument(pdfUrl).promise.then(async pdf => {
             totalPages = pdf.numPages;
             pageCounter.textContent = `1 / ${totalPages}`;
 
-            // Risoluzione elevata per evitare la sgranatura su schermi Retina / HiDPI
-            const outputScale = isMobile ? 1.5 : (window.devicePixelRatio || 1) * 2.0;
+            // Risoluzione elevata (Alta Definizione su Schermi Retina/4K)
+            const dpr = window.devicePixelRatio || 1;
+            const baseScale = isMobile ? 1.5 : 2.5;
 
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
                 const pageBox = document.createElement("div");
@@ -297,28 +323,35 @@
             // Render Sequenziale Pagine
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
                 const page = await pdf.getPage(pageNumber);
-                const viewport = page.getViewport({ scale: isMobile ? 1.2 : 1.8 });
+                const viewport = page.getViewport({ scale: baseScale });
                 const wrapper = document.getElementById("wrapper-" + pageNumber);
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
 
-                // Configurazione dimensioni Canvas per rendering nitido dei testi
-                canvas.width = Math.floor(viewport.width * outputScale);
-                canvas.height = Math.floor(viewport.height * outputScale);
-                canvas.style.width = viewport.width + "px";
-                canvas.style.height = viewport.height + "px";
+                // Rendering ad altissima densità di pixel
+                canvas.width = Math.floor(viewport.width * dpr);
+                canvas.height = Math.floor(viewport.height * dpr);
+
+                const displayWidth = viewport.width / baseScale;
+                const displayHeight = viewport.height / baseScale;
+
+                canvas.style.width = displayWidth + "px";
+                canvas.style.height = displayHeight + "px";
+
+                wrapper.style.width = displayWidth + "px";
+                wrapper.style.height = displayHeight + "px";
 
                 wrapper.appendChild(canvas);
 
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                context.scale(dpr, dpr);
 
                 await page.render({
                     canvasContext: context,
-                    transform: transform,
                     viewport: viewport
                 }).promise;
 
                 // Gestione dei link interattivi (Instagram, YouTube, ecc.)
+                const displayViewport = page.getViewport({ scale: 1.0 });
                 const annotations = await page.getAnnotations();
                 if (annotations.length > 0) {
                     const layer = document.createElement("div");
@@ -332,38 +365,25 @@
                             link.target = '_blank';
                             link.rel = 'noopener noreferrer';
 
-                            const rect = viewport.convertToViewportRectangle(annotation.rect);
+                            const rect = displayViewport.convertToViewportRectangle(annotation.rect);
                             const left = Math.min(rect[0], rect[2]);
                             const top = Math.min(rect[1], rect[3]);
                             const width = Math.abs(rect[0] - rect[2]);
                             const height = Math.abs(rect[1] - rect[3]);
 
-                            link.style.left = (left / viewport.width * 100) + '%';
-                            link.style.top = ((viewport.height - top) / viewport.height * 100) + '%';
-                            link.style.width = (width / viewport.width * 100) + '%';
-                            link.style.height = (height / viewport.height * 100) + '%';
+                            link.style.left = (left / displayViewport.width * 100) + '%';
+                            link.style.top = ((displayViewport.height - top) / displayViewport.height * 100) + '%';
+                            link.style.width = (width / displayViewport.width * 100) + '%';
+                            link.style.height = (height / displayViewport.height * 100) + '%';
 
                             layer.appendChild(link);
                         }
                     });
                 }
-
-                // Avanzamento barra di caricamento (0% -> 100%)
-                const progress = Math.round((pageNumber / totalPages) * 100);
-                loaderBarFill.style.width = progress + "%";
-
-                // Alla prima pagina completata: rimuovi la barra e attiva l'animazione di entrata
-                if (pageNumber === 1) {
-                    setTimeout(() => {
-                        loader.classList.add("exit");
-                        const firstBox = document.getElementById("page-box-1");
-                        setTimeout(() => {
-                            firstBox.classList.add("animate-in");
-                        }, 150);
-                        setTimeout(() => loader.remove(), 800);
-                    }, 600);
-                }
             }
+
+            pdfLoaded = true;
+            checkAndStartIntro();
         }).catch(err => {
             console.error("Errore nel caricamento del PDF: ", err);
         });
