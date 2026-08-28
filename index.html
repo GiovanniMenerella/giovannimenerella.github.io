@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON BARRA 5PX */
+        /* INTRO NERA CON BARRA FLUIDA */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,12 +33,12 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.8s ease, filter 0.8s ease;
+            transition: opacity 0.6s ease, filter 0.6s ease;
         }
 
         #loader.exit {
             opacity: 0;
-            filter: blur(10px);
+            filter: blur(8px);
             pointer-events: none;
         }
 
@@ -55,7 +55,10 @@
             height: 100%;
             background: #ffffff;
             border-radius: 3px;
-            animation: fillProgress 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .loader-bar-fill.animate {
+            animation: fillProgress 3s linear forwards;
         }
 
         @keyframes fillProgress {
@@ -63,12 +66,12 @@
             100% { width: 100%; }
         }
 
-        /* TRACK SLIDER DESKTOP */
+        /* CONTENITORE SLIDER DESKTOP */
         #pdf-container {
             display: flex;
             width: 100vw;
             height: 100vh;
-            background: #000;
+            background: #000000;
             transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
             will-change: transform;
         }
@@ -81,20 +84,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 0;
         }
 
         /* ANIMAZIONE ZOOM E SALITA SULLA PRIMA PAGINA */
-        .page-box:first-child canvas {
+        .page-box:first-child .canvas-wrapper {
             opacity: 0;
-            transform: translateY(140px) scale(1.12);
-            filter: blur(5px);
-            transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.5s cubic-bezier(0.16, 1, 0.3, 1),
-                        filter 1.2s ease;
+            transform: translateY(120px) scale(1.08);
+            filter: blur(6px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                        filter 1s ease;
         }
 
-        .page-box:first-child.animate-in canvas {
+        .page-box:first-child.animate-in .canvas-wrapper {
             opacity: 1;
             transform: translateY(0) scale(1);
             filter: blur(0);
@@ -113,25 +116,26 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.9);
         }
 
-        /* STRATO LINK CLICCABILI */
+        /* STRATO LINK CLICCABILI (INSTAGRAM, YOUTUBE, ECC.) */
         .annotationLayer {
             position: absolute;
             inset: 0;
+            z-index: 10;
             pointer-events: none;
         }
 
         .annotationLayer a {
             position: absolute;
             pointer-events: auto;
-            color: transparent;
+            background: rgba(255, 255, 255, 0);
             cursor: pointer;
         }
 
-        /* PULSANTI E INTERFACCIA */
+        /* PULSANTI DI INTERFACCIA */
         .ui-btn {
             position: fixed;
             background: rgba(255, 255, 255, 0.12);
-            color: #fff;
+            color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             cursor: pointer;
@@ -195,7 +199,7 @@
             pointer-events: none;
         }
 
-        /* RESPONSIVE SMARTPHONE */
+        /* ADATTAMENTO SMARTPHONE */
         @media (max-width: 768px) {
             body, html {
                 overflow-x: hidden;
@@ -235,7 +239,7 @@
 
 <body>
 
-    <!-- Intro Schermata Nera con Barra 5px (3 secondi) -->
+    <!-- Intro Schermata Nera con Barra 5px (3s lineare) -->
     <div id="loader">
         <div class="loader-bar-container">
             <div id="loader-bar-fill" class="loader-bar-fill"></div>
@@ -256,6 +260,7 @@
 
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
+        const loaderBarFill = document.getElementById("loader-bar-fill");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -266,14 +271,10 @@
 
         let currentPage = 1;
         let totalPages = 0;
-        let pdfLoaded = false;
-        let timerFinished = false;
+        let loadedPdfDocument = null;
 
-        // Timer ridotto a 3 secondi per la barra di caricamento
-        setTimeout(() => {
-            timerFinished = true;
-            checkAndStartIntro();
-        }, 3000);
+        // Avvia l'animazione della barra (3 secondi esatti)
+        loaderBarFill.classList.add("animate");
 
         function updateNavigation() {
             if (isMobile) return;
@@ -283,21 +284,10 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        function checkAndStartIntro() {
-            if (pdfLoaded && timerFinished) {
-                loader.classList.add("exit");
-                const firstBox = document.getElementById("page-box-1");
-                setTimeout(() => {
-                    if (firstBox) firstBox.classList.add("animate-in");
-                }, 150);
-                setTimeout(() => loader.remove(), 800);
-            }
-        }
+        async function renderPDF() {
+            if (!loadedPdfDocument) return;
 
-        pdfjsLib.getDocument(pdfUrl).promise.then(async pdf => {
-            totalPages = pdf.numPages;
-            pageCounter.textContent = `1 / ${totalPages}`;
-
+            container.innerHTML = "";
             const dpr = window.devicePixelRatio || 1;
 
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
@@ -314,7 +304,7 @@
             }
 
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-                const page = await pdf.getPage(pageNumber);
+                const page = await loadedPdfDocument.getPage(pageNumber);
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
 
                 let displayWidth, displayHeight;
@@ -323,9 +313,8 @@
                     displayWidth = window.innerWidth;
                     displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
                 } else {
-                    const padding = 20;
-                    const maxW = window.innerWidth - padding;
-                    const maxH = window.innerHeight - padding;
+                    const maxW = window.innerWidth;
+                    const maxH = window.innerHeight;
                     const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
 
                     displayWidth = Math.floor(unscaledViewport.width * fitScale);
@@ -336,8 +325,8 @@
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
 
-                // Render in alta risoluzione (2x pixel density per nitidezza perfetta)
-                const renderScale = (displayWidth / unscaledViewport.width) * dpr * 2;
+                // Nitidezza massima: rendering al triplo della risoluzione display
+                const renderScale = (displayWidth / unscaledViewport.width) * dpr * 3;
                 const renderViewport = page.getViewport({ scale: renderScale });
 
                 canvas.width = renderViewport.width;
@@ -356,7 +345,7 @@
                     viewport: renderViewport
                 }).promise;
 
-                // Gestione dei link interattivi
+                // Gestione e posizionamento corretto dei link
                 const annotations = await page.getAnnotations();
                 if (annotations.length > 0) {
                     const layer = document.createElement("div");
@@ -387,13 +376,32 @@
                 }
             }
 
-            pdfLoaded = true;
-            checkAndStartIntro();
+            updateNavigation();
+        }
+
+        // Caricamento del file PDF
+        const pdfPromise = pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+            loadedPdfDocument = pdf;
+            totalPages = pdf.numPages;
+            pageCounter.textContent = `1 / ${totalPages}`;
+            return renderPDF();
+        });
+
+        // Attende la fine dell'animazione di 3s per aprire il PDF
+        const animationPromise = new Promise(resolve => setTimeout(resolve, 3000));
+
+        Promise.all([pdfPromise, animationPromise]).then(() => {
+            loader.classList.add("exit");
+            const firstBox = document.getElementById("page-box-1");
+            setTimeout(() => {
+                if (firstBox) firstBox.classList.add("animate-in");
+            }, 100);
+            setTimeout(() => loader.remove(), 600);
         }).catch(err => {
             console.error("Errore nel caricamento del PDF: ", err);
         });
 
-        // GESTIONE CONTROLLI E SCORRIMENTO
+        // NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
@@ -433,6 +441,7 @@
             setTimeout(() => { isScrolling = false; }, 400);
         });
 
+        // FULLSCREEN RE-RENDER PER ADATTARE LE DIMENSIONI ALLA SCHERMATA
         fullscreenBtn.addEventListener("click", () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -442,6 +451,12 @@
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 }
+            }
+        });
+
+        window.addEventListener("resize", () => {
+            if (!isMobile && loadedPdfDocument) {
+                renderPDF();
             }
         });
     </script>
