@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON BARRA DI CARICAMENTO 5PX */
+        /* SCHERMATA INTRO NERA CON BARRA 5PX */
         #loader {
             position: fixed;
             inset: 0;
@@ -55,7 +55,7 @@
             height: 100%;
             background: #ffffff;
             border-radius: 3px;
-            animation: fillProgress 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: fillProgress 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         @keyframes fillProgress {
@@ -105,21 +105,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            max-width: 100vw;
-            max-height: 100vh;
         }
 
         canvas {
             display: block;
-            max-width: 100vw;
-            max-height: 100vh;
-            width: auto;
-            height: auto;
             border-radius: 4px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.9);
-            object-fit: contain;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
         }
 
         /* STRATO LINK CLICCABILI */
@@ -225,10 +216,14 @@
                 margin-bottom: 10px;
             }
 
+            .canvas-wrapper {
+                width: 100% !important;
+                height: auto !important;
+            }
+
             canvas {
-                width: 100%;
-                height: auto;
-                max-height: none;
+                width: 100% !important;
+                height: auto !important;
             }
 
             .ui-btn, #page-counter {
@@ -240,7 +235,7 @@
 
 <body>
 
-    <!-- Intro Schermata Nera con Barra Bianco 5px -->
+    <!-- Intro Schermata Nera con Barra 5px (3 secondi) -->
     <div id="loader">
         <div class="loader-bar-container">
             <div id="loader-bar-fill" class="loader-bar-fill"></div>
@@ -274,11 +269,11 @@
         let pdfLoaded = false;
         let timerFinished = false;
 
-        // Timer di 4 secondi per l'animazione della barra
+        // Timer ridotto a 3 secondi per la barra di caricamento
         setTimeout(() => {
             timerFinished = true;
             checkAndStartIntro();
-        }, 4000);
+        }, 3000);
 
         function updateNavigation() {
             if (isMobile) return;
@@ -303,9 +298,7 @@
             totalPages = pdf.numPages;
             pageCounter.textContent = `1 / ${totalPages}`;
 
-            // Risoluzione elevata (Alta Definizione su Schermi Retina/4K)
             const dpr = window.devicePixelRatio || 1;
-            const baseScale = isMobile ? 1.5 : 2.5;
 
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
                 const pageBox = document.createElement("div");
@@ -320,20 +313,35 @@
                 container.appendChild(pageBox);
             }
 
-            // Render Sequenziale Pagine
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
                 const page = await pdf.getPage(pageNumber);
-                const viewport = page.getViewport({ scale: baseScale });
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+                let displayWidth, displayHeight;
+
+                if (isMobile) {
+                    displayWidth = window.innerWidth;
+                    displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
+                } else {
+                    const padding = 20;
+                    const maxW = window.innerWidth - padding;
+                    const maxH = window.innerHeight - padding;
+                    const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
+
+                    displayWidth = Math.floor(unscaledViewport.width * fitScale);
+                    displayHeight = Math.floor(unscaledViewport.height * fitScale);
+                }
+
                 const wrapper = document.getElementById("wrapper-" + pageNumber);
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
 
-                // Rendering ad altissima densità di pixel
-                canvas.width = Math.floor(viewport.width * dpr);
-                canvas.height = Math.floor(viewport.height * dpr);
+                // Render in alta risoluzione (2x pixel density per nitidezza perfetta)
+                const renderScale = (displayWidth / unscaledViewport.width) * dpr * 2;
+                const renderViewport = page.getViewport({ scale: renderScale });
 
-                const displayWidth = viewport.width / baseScale;
-                const displayHeight = viewport.height / baseScale;
+                canvas.width = renderViewport.width;
+                canvas.height = renderViewport.height;
 
                 canvas.style.width = displayWidth + "px";
                 canvas.style.height = displayHeight + "px";
@@ -343,15 +351,12 @@
 
                 wrapper.appendChild(canvas);
 
-                context.scale(dpr, dpr);
-
                 await page.render({
                     canvasContext: context,
-                    viewport: viewport
+                    viewport: renderViewport
                 }).promise;
 
-                // Gestione dei link interattivi (Instagram, YouTube, ecc.)
-                const displayViewport = page.getViewport({ scale: 1.0 });
+                // Gestione dei link interattivi
                 const annotations = await page.getAnnotations();
                 if (annotations.length > 0) {
                     const layer = document.createElement("div");
@@ -365,16 +370,16 @@
                             link.target = '_blank';
                             link.rel = 'noopener noreferrer';
 
-                            const rect = displayViewport.convertToViewportRectangle(annotation.rect);
+                            const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
                             const left = Math.min(rect[0], rect[2]);
                             const top = Math.min(rect[1], rect[3]);
                             const width = Math.abs(rect[0] - rect[2]);
                             const height = Math.abs(rect[1] - rect[3]);
 
-                            link.style.left = (left / displayViewport.width * 100) + '%';
-                            link.style.top = ((displayViewport.height - top) / displayViewport.height * 100) + '%';
-                            link.style.width = (width / displayViewport.width * 100) + '%';
-                            link.style.height = (height / displayViewport.height * 100) + '%';
+                            link.style.left = (left / unscaledViewport.width * 100) + '%';
+                            link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
+                            link.style.width = (width / unscaledViewport.width * 100) + '%';
+                            link.style.height = (height / unscaledViewport.height * 100) + '%';
 
                             layer.appendChild(link);
                         }
