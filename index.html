@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* INTRO NERA CON BARRA FLUIDA */
+        /* SCHERMATA INTRO NERA CON BARRA */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,20 +33,19 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.6s ease, filter 0.6s ease;
+            transition: opacity 0.5s ease;
         }
 
         #loader.exit {
             opacity: 0;
-            filter: blur(8px);
             pointer-events: none;
         }
 
         .loader-bar-container {
             width: 240px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 3px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
             overflow: hidden;
         }
 
@@ -54,25 +53,17 @@
             width: 0%;
             height: 100%;
             background: #ffffff;
-            border-radius: 3px;
+            border-radius: 2px;
+            transition: width 0.2s linear;
         }
 
-        .loader-bar-fill.animate {
-            animation: fillProgress 3s linear forwards;
-        }
-
-        @keyframes fillProgress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-
-        /* CONTENITORE SLIDER DESKTOP */
+        /* SLIDER CONTAINERS */
         #pdf-container {
             display: flex;
             width: 100vw;
             height: 100vh;
             background: #000000;
-            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
             will-change: transform;
         }
 
@@ -84,23 +75,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
         }
 
-        /* ANIMAZIONE ZOOM E SALITA SULLA PRIMA PAGINA */
+        /* ANIMAZIONE INGRESSO PRIMA PAGINA FLUIDA */
         .page-box:first-child .canvas-wrapper {
             opacity: 0;
-            transform: translateY(120px) scale(1.08);
-            filter: blur(6px);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-                        filter 1s ease;
+            transform: translateY(60px) scale(0.96);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
 
         .page-box:first-child.animate-in .canvas-wrapper {
             opacity: 1;
             transform: translateY(0) scale(1);
-            filter: blur(0);
         }
 
         .canvas-wrapper {
@@ -108,12 +94,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+            border-radius: 4px;
         }
 
         canvas {
             display: block;
             border-radius: 4px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.9);
         }
 
         /* STRATO LINK CLICCABILI (INSTAGRAM, YOUTUBE, ECC.) */
@@ -131,26 +118,26 @@
             cursor: pointer;
         }
 
-        /* PULSANTI DI INTERFACCIA */
+        /* CONTROLLI UI AD ALTO CONTRASTO (CON FORTE BORDO E SFONDO SCURO) */
         .ui-btn {
             position: fixed;
-            background: rgba(255, 255, 255, 0.12);
+            background: #000000;
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 2px solid #ffffff;
             border-radius: 50%;
             cursor: pointer;
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(10px);
-            transition: background 0.3s, transform 0.2s, opacity 0.3s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.9), 0 0 5px rgba(255, 255, 255, 0.3);
+            transition: background 0.2s, transform 0.2s, opacity 0.2s;
             user-select: none;
         }
 
         .ui-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.08);
+            background: #222222;
+            transform: scale(1.1);
         }
 
         .nav-btn {
@@ -162,11 +149,11 @@
         }
 
         .nav-btn:hover {
-            transform: translateY(-50%) scale(1.08);
+            transform: translateY(-50%) scale(1.1);
         }
 
         .nav-btn.disabled {
-            opacity: 0.15;
+            opacity: 0.2;
             cursor: default;
             pointer-events: none;
         }
@@ -177,8 +164,8 @@
         #fullscreen-btn {
             top: 25px;
             right: 25px;
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
             font-size: 18px;
         }
 
@@ -187,19 +174,19 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6);
-            color: rgba(255, 255, 255, 0.75);
+            background: #000000;
+            color: #ffffff;
             padding: 6px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
             letter-spacing: 1.5px;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
             z-index: 1000;
             pointer-events: none;
         }
 
-        /* ADATTAMENTO SMARTPHONE */
+        /* ADATTAMENTO MOBILE */
         @media (max-width: 768px) {
             body, html {
                 overflow-x: hidden;
@@ -239,14 +226,12 @@
 
 <body>
 
-    <!-- Intro Schermata Nera con Barra 5px (3s lineare) -->
     <div id="loader">
         <div class="loader-bar-container">
             <div id="loader-bar-fill" class="loader-bar-fill"></div>
         </div>
     </div>
 
-    <!-- Controlli Desktop -->
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
     <button id="prev-btn" class="ui-btn nav-btn" aria-label="Pagina precedente">&#10094;</button>
     <button id="next-btn" class="ui-btn nav-btn" aria-label="Pagina successiva">&#10095;</button>
@@ -273,8 +258,9 @@
         let totalPages = 0;
         let loadedPdfDocument = null;
 
-        // Avvia l'animazione della barra (3 secondi esatti)
-        loaderBarFill.classList.add("animate");
+        function setProgress(percent) {
+            loaderBarFill.style.width = Math.min(percent, 100) + "%";
+        }
 
         function updateNavigation() {
             if (isMobile) return;
@@ -284,124 +270,126 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        async function renderPDF() {
-            if (!loadedPdfDocument) return;
+        async function renderSinglePage(pageNumber) {
+            const page = await loadedPdfDocument.getPage(pageNumber);
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
 
-            container.innerHTML = "";
-            const dpr = window.devicePixelRatio || 1;
+            let displayWidth, displayHeight;
 
-            for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-                const pageBox = document.createElement("div");
-                pageBox.className = "page-box";
-                pageBox.id = "page-box-" + pageNumber;
+            if (isMobile) {
+                displayWidth = window.innerWidth;
+                displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
+            } else {
+                const maxW = window.innerWidth;
+                const maxH = window.innerHeight;
+                const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
 
-                const wrapper = document.createElement("div");
-                wrapper.className = "canvas-wrapper";
-                wrapper.id = "wrapper-" + pageNumber;
-
-                pageBox.appendChild(wrapper);
-                container.appendChild(pageBox);
+                displayWidth = Math.floor(unscaledViewport.width * fitScale);
+                displayHeight = Math.floor(unscaledViewport.height * fitScale);
             }
 
-            for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-                const page = await loadedPdfDocument.getPage(pageNumber);
-                const unscaledViewport = page.getViewport({ scale: 1.0 });
+            const wrapper = document.getElementById("wrapper-" + pageNumber);
+            wrapper.style.width = displayWidth + "px";
+            wrapper.style.height = displayHeight + "px";
 
-                let displayWidth, displayHeight;
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
 
-                if (isMobile) {
-                    displayWidth = window.innerWidth;
-                    displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
-                } else {
-                    const maxW = window.innerWidth;
-                    const maxH = window.innerHeight;
-                    const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
+            // ALTA RISOLUZIONE (Super-sampling per massima nitidezza)
+            const dpr = Math.max(window.devicePixelRatio || 1, 2);
+            const renderScale = (displayWidth / unscaledViewport.width) * dpr;
+            const renderViewport = page.getViewport({ scale: renderScale });
 
-                    displayWidth = Math.floor(unscaledViewport.width * fitScale);
-                    displayHeight = Math.floor(unscaledViewport.height * fitScale);
-                }
+            canvas.width = renderViewport.width;
+            canvas.height = renderViewport.height;
 
-                const wrapper = document.getElementById("wrapper-" + pageNumber);
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
+            canvas.style.width = displayWidth + "px";
+            canvas.style.height = displayHeight + "px";
 
-                // Nitidezza massima: rendering al triplo della risoluzione display
-                const renderScale = (displayWidth / unscaledViewport.width) * dpr * 3;
-                const renderViewport = page.getViewport({ scale: renderScale });
+            wrapper.appendChild(canvas);
 
-                canvas.width = renderViewport.width;
-                canvas.height = renderViewport.height;
+            await page.render({
+                canvasContext: context,
+                viewport: renderViewport
+            }).promise;
 
-                canvas.style.width = displayWidth + "px";
-                canvas.style.height = displayHeight + "px";
+            // STRATO ANNOTAZIONI E LINK INTERATTIVI
+            const annotations = await page.getAnnotations();
+            if (annotations.length > 0) {
+                const layer = document.createElement("div");
+                layer.className = "annotationLayer";
+                wrapper.appendChild(layer);
 
-                wrapper.style.width = displayWidth + "px";
-                wrapper.style.height = displayHeight + "px";
+                annotations.forEach(annotation => {
+                    if (annotation.subtype === 'Link' && annotation.url) {
+                        const link = document.createElement('a');
+                        link.href = annotation.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
 
-                wrapper.appendChild(canvas);
+                        const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
+                        const left = Math.min(rect[0], rect[2]);
+                        const top = Math.min(rect[1], rect[3]);
+                        const width = Math.abs(rect[0] - rect[2]);
+                        const height = Math.abs(rect[1] - rect[3]);
 
-                await page.render({
-                    canvasContext: context,
-                    viewport: renderViewport
-                }).promise;
+                        link.style.left = (left / unscaledViewport.width * 100) + '%';
+                        link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
+                        link.style.width = (width / unscaledViewport.width * 100) + '%';
+                        link.style.height = (height / unscaledViewport.height * 100) + '%';
 
-                // Gestione e posizionamento corretto dei link
-                const annotations = await page.getAnnotations();
-                if (annotations.length > 0) {
-                    const layer = document.createElement("div");
-                    layer.className = "annotationLayer";
-                    wrapper.appendChild(layer);
-
-                    annotations.forEach(annotation => {
-                        if (annotation.subtype === 'Link' && annotation.url) {
-                            const link = document.createElement('a');
-                            link.href = annotation.url;
-                            link.target = '_blank';
-                            link.rel = 'noopener noreferrer';
-
-                            const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
-                            const left = Math.min(rect[0], rect[2]);
-                            const top = Math.min(rect[1], rect[3]);
-                            const width = Math.abs(rect[0] - rect[2]);
-                            const height = Math.abs(rect[1] - rect[3]);
-
-                            link.style.left = (left / unscaledViewport.width * 100) + '%';
-                            link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
-                            link.style.width = (width / unscaledViewport.width * 100) + '%';
-                            link.style.height = (height / unscaledViewport.height * 100) + '%';
-
-                            layer.appendChild(link);
-                        }
-                    });
-                }
+                        layer.appendChild(link);
+                    }
+                });
             }
-
-            updateNavigation();
         }
 
-        // Caricamento del file PDF
-        const pdfPromise = pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-            loadedPdfDocument = pdf;
-            totalPages = pdf.numPages;
-            pageCounter.textContent = `1 / ${totalPages}`;
-            return renderPDF();
-        });
+        async function initPDF() {
+            try {
+                loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
+                totalPages = loadedPdfDocument.numPages;
+                pageCounter.textContent = `1 / ${totalPages}`;
 
-        // Attende la fine dell'animazione di 3s per aprire il PDF
-        const animationPromise = new Promise(resolve => setTimeout(resolve, 3000));
+                container.innerHTML = "";
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBox = document.createElement("div");
+                    pageBox.className = "page-box";
+                    pageBox.id = "page-box-" + i;
 
-        Promise.all([pdfPromise, animationPromise]).then(() => {
-            loader.classList.add("exit");
-            const firstBox = document.getElementById("page-box-1");
-            setTimeout(() => {
-                if (firstBox) firstBox.classList.add("animate-in");
-            }, 100);
-            setTimeout(() => loader.remove(), 600);
-        }).catch(err => {
-            console.error("Errore nel caricamento del PDF: ", err);
-        });
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "canvas-wrapper";
+                    wrapper.id = "wrapper-" + i;
 
-        // NAVIGAZIONE
+                    pageBox.appendChild(wrapper);
+                    container.appendChild(pageBox);
+                }
+
+                // 1. RENDERIZZA SUBITO LA PAGINA 1
+                setProgress(50);
+                await renderSinglePage(1);
+                setProgress(100);
+
+                // 2. APRI IL PDF SENZA ATTESE
+                setTimeout(() => {
+                    loader.classList.add("exit");
+                    const firstBox = document.getElementById("page-box-1");
+                    if (firstBox) firstBox.classList.add("animate-in");
+                    setTimeout(() => loader.remove(), 500);
+                }, 150);
+
+                // 3. CARICAMENTO IN BACKGROUND DELLE ALTRE PAGINE
+                for (let i = 2; i <= totalPages; i++) {
+                    await renderSinglePage(i);
+                }
+
+            } catch (err) {
+                console.error("Errore PDF:", err);
+            }
+        }
+
+        initPDF();
+
+        // CONTROLLI DI NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
@@ -441,7 +429,7 @@
             setTimeout(() => { isScrolling = false; }, 400);
         });
 
-        // FULLSCREEN RE-RENDER PER ADATTARE LE DIMENSIONI ALLA SCHERMATA
+        // FULLSCREEN
         fullscreenBtn.addEventListener("click", () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -454,10 +442,20 @@
             }
         });
 
+        // ADATTAMENTO DIMENSIONI AL RESIZE/FULLSCREEN
+        let resizeTimeout;
         window.addEventListener("resize", () => {
-            if (!isMobile && loadedPdfDocument) {
-                renderPDF();
-            }
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(async () => {
+                if (!isMobile && loadedPdfDocument) {
+                    for (let i = 1; i <= totalPages; i++) {
+                        const wrapper = document.getElementById("wrapper-" + i);
+                        if (wrapper) wrapper.innerHTML = "";
+                        await renderSinglePage(i);
+                    }
+                    updateNavigation();
+                }
+            }, 200);
         });
     </script>
 </body>
