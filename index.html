@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON BARRA */
+        /* SCHERMATA INTRO NERA CON BARRA 4PX */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,18 +33,20 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease, filter 0.8s ease;
         }
 
+        /* SCOMPARSA CON SFOCATURA E DISSOLVENZA */
         #loader.exit {
             opacity: 0;
+            filter: blur(12px);
             pointer-events: none;
         }
 
         .loader-bar-container {
             width: 240px;
             height: 4px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 2px;
             overflow: hidden;
         }
@@ -54,16 +56,21 @@
             height: 100%;
             background: #ffffff;
             border-radius: 2px;
-            transition: width 0.2s linear;
+            animation: fillProgress 3s linear forwards;
         }
 
-        /* SLIDER CONTAINERS */
+        @keyframes fillProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* SLIDER CONTAINER DESKTOP */
         #pdf-container {
             display: flex;
             width: 100vw;
             height: 100vh;
             background: #000000;
-            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
             will-change: transform;
         }
 
@@ -77,16 +84,20 @@
             justify-content: center;
         }
 
-        /* ANIMAZIONE INGRESSO PRIMA PAGINA FLUIDA */
+        /* ANIMAZIONE SCROLL + ZOOM + SFOCATURA PRIMA PAGINA */
         .page-box:first-child .canvas-wrapper {
             opacity: 0;
-            transform: translateY(60px) scale(0.96);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transform: translateY(140px) scale(1.12);
+            filter: blur(8px);
+            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        filter 1.2s ease;
         }
 
         .page-box:first-child.animate-in .canvas-wrapper {
             opacity: 1;
             transform: translateY(0) scale(1);
+            filter: blur(0);
         }
 
         .canvas-wrapper {
@@ -118,7 +129,7 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI AD ALTO CONTRASTO (CON FORTE BORDO E SFONDO SCURO) */
+        /* CONTROLLI UI AD ALTO CONTRASTO */
         .ui-btn {
             position: fixed;
             background: #000000;
@@ -186,7 +197,7 @@
             pointer-events: none;
         }
 
-        /* ADATTAMENTO MOBILE */
+        /* RESPONSIVE SMARTPHONE */
         @media (max-width: 768px) {
             body, html {
                 overflow-x: hidden;
@@ -245,7 +256,6 @@
 
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
-        const loaderBarFill = document.getElementById("loader-bar-fill");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -257,10 +267,6 @@
         let currentPage = 1;
         let totalPages = 0;
         let loadedPdfDocument = null;
-
-        function setProgress(percent) {
-            loaderBarFill.style.width = Math.min(percent, 100) + "%";
-        }
 
         function updateNavigation() {
             if (isMobile) return;
@@ -295,7 +301,6 @@
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
 
-            // ALTA RISOLUZIONE (Super-sampling per massima nitidezza)
             const dpr = Math.max(window.devicePixelRatio || 1, 2);
             const renderScale = (displayWidth / unscaledViewport.width) * dpr;
             const renderViewport = page.getViewport({ scale: renderScale });
@@ -313,7 +318,6 @@
                 viewport: renderViewport
             }).promise;
 
-            // STRATO ANNOTAZIONI E LINK INTERATTIVI
             const annotations = await page.getAnnotations();
             if (annotations.length > 0) {
                 const layer = document.createElement("div");
@@ -364,20 +368,24 @@
                     container.appendChild(pageBox);
                 }
 
-                // 1. RENDERIZZA SUBITO LA PAGINA 1
-                setProgress(50);
+                // Renderizza prima la pagina 1
                 await renderSinglePage(1);
-                setProgress(100);
 
-                // 2. APRI IL PDF SENZA ATTESE
+                // Attendi il termine esatto dei 3s della barra
                 setTimeout(() => {
+                    // Scomparsa con sfocatura del loader
                     loader.classList.add("exit");
-                    const firstBox = document.getElementById("page-box-1");
-                    if (firstBox) firstBox.classList.add("animate-in");
-                    setTimeout(() => loader.remove(), 500);
-                }, 150);
 
-                // 3. CARICAMENTO IN BACKGROUND DELLE ALTRE PAGINE
+                    // Avvio dell'animazione d'ingresso fluido sulla prima pagina
+                    const firstBox = document.getElementById("page-box-1");
+                    setTimeout(() => {
+                        if (firstBox) firstBox.classList.add("animate-in");
+                    }, 100);
+
+                    setTimeout(() => loader.remove(), 800);
+                }, 3000);
+
+                // Caricamento in background delle pagine successive
                 for (let i = 2; i <= totalPages; i++) {
                     await renderSinglePage(i);
                 }
@@ -389,7 +397,7 @@
 
         initPDF();
 
-        // CONTROLLI DI NAVIGAZIONE
+        // CONTROLLI NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
@@ -429,7 +437,6 @@
             setTimeout(() => { isScrolling = false; }, 400);
         });
 
-        // FULLSCREEN
         fullscreenBtn.addEventListener("click", () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -442,7 +449,6 @@
             }
         });
 
-        // ADATTAMENTO DIMENSIONI AL RESIZE/FULLSCREEN
         let resizeTimeout;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimeout);
