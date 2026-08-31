@@ -36,7 +36,6 @@
             transition: opacity 0.8s ease, filter 0.8s ease;
         }
 
-        /* SCOMPARSA CON SFOCATURA E DISSOLVENZA */
         #loader.exit {
             opacity: 0;
             filter: blur(12px);
@@ -114,7 +113,7 @@
             border-radius: 4px;
         }
 
-        /* STRATO LINK CLICCABILI (INSTAGRAM, YOUTUBE, ECC.) */
+        /* STRATO LINK CLICCABILI */
         .annotationLayer {
             position: absolute;
             inset: 0;
@@ -129,42 +128,46 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI AD ALTO CONTRASTO */
+        /* CONTROLLI UI DELICATI E SEMITRASPARENTI */
         .ui-btn {
             position: fixed;
-            background: #000000;
-            color: #ffffff;
-            border: 2px solid #ffffff;
+            background: rgba(0, 0, 0, 0.35);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             cursor: pointer;
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.9), 0 0 5px rgba(255, 255, 255, 0.3);
-            transition: background 0.2s, transform 0.2s, opacity 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: background 0.3s, border-color 0.3s, transform 0.2s, opacity 0.3s;
             user-select: none;
         }
 
         .ui-btn:hover {
-            background: #222222;
-            transform: scale(1.1);
+            background: rgba(0, 0, 0, 0.65);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            transform: scale(1.08);
         }
 
         .nav-btn {
             top: 50%;
             transform: translateY(-50%);
-            width: 52px;
-            height: 52px;
-            font-size: 22px;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
         }
 
         .nav-btn:hover {
-            transform: translateY(-50%) scale(1.1);
+            transform: translateY(-50%) scale(1.08);
         }
 
         .nav-btn.disabled {
-            opacity: 0.2;
+            opacity: 0.15;
             cursor: default;
             pointer-events: none;
         }
@@ -175,9 +178,9 @@
         #fullscreen-btn {
             top: 25px;
             right: 25px;
-            width: 46px;
-            height: 46px;
-            font-size: 18px;
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
         }
 
         #page-counter {
@@ -185,14 +188,16 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: #000000;
-            color: #ffffff;
+            background: rgba(0, 0, 0, 0.35);
+            color: rgba(255, 255, 255, 0.9);
             padding: 6px 16px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 1.5px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             pointer-events: none;
         }
@@ -368,15 +373,11 @@
                     container.appendChild(pageBox);
                 }
 
-                // Renderizza prima la pagina 1
                 await renderSinglePage(1);
 
-                // Attendi il termine esatto dei 3s della barra
                 setTimeout(() => {
-                    // Scomparsa con sfocatura del loader
                     loader.classList.add("exit");
 
-                    // Avvio dell'animazione d'ingresso fluido sulla prima pagina
                     const firstBox = document.getElementById("page-box-1");
                     setTimeout(() => {
                         if (firstBox) firstBox.classList.add("animate-in");
@@ -385,7 +386,6 @@
                     setTimeout(() => loader.remove(), 800);
                 }, 3000);
 
-                // Caricamento in background delle pagine successive
                 for (let i = 2; i <= totalPages; i++) {
                     await renderSinglePage(i);
                 }
@@ -397,7 +397,6 @@
 
         initPDF();
 
-        // CONTROLLI NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
