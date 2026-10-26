@@ -63,7 +63,7 @@
             100% { width: 100%; }
         }
 
-        /* SLIDER CONTAINER */
+        /* SLIDER CONTAINER DESKTOP */
         #pdf-container {
             display: flex;
             width: 100vw;
@@ -128,7 +128,7 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI DESKTOP (VISIBILI SOLO SU PC) */
+        /* CONTROLLI UI DELICATI E SEMITRASPARENTI */
         .ui-btn {
             position: fixed;
             background: rgba(0, 0, 0, 0.35);
@@ -202,8 +202,8 @@
             pointer-events: none;
         }
 
-        /* MEDIA QUERY: SMARTPHONE IN VERTICALE */
-        @media (max-width: 768px) and (orientation: portrait) {
+        /* RESPONSIVE SMARTPHONE */
+        @media (max-width: 768px) {
             body, html {
                 overflow-x: hidden;
                 overflow-y: auto;
@@ -234,14 +234,7 @@
             }
 
             .ui-btn, #page-counter {
-                display: none !important;
-            }
-        }
-
-        /* MEDIA QUERY: SMARTPHONE IN ORIZZONTALE (LANDSCAPE) -> NASCONDE OGNI BOTTONE/CONTATORE */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .ui-btn, #page-counter {
-                display: none !important;
+                display: none;
             }
         }
     </style>
@@ -255,7 +248,6 @@
         </div>
     </div>
 
-    <!-- Pulsanti di navigazione e UI (Visibili solo su Desktop) -->
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
     <button id="prev-btn" class="ui-btn nav-btn" aria-label="Pagina precedente">&#10094;</button>
     <button id="next-btn" class="ui-btn nav-btn" aria-label="Pagina successiva">&#10095;</button>
@@ -274,20 +266,8 @@
         const fullscreenBtn = document.getElementById("fullscreen-btn");
         const pageCounter = document.getElementById("page-counter");
 
-        const isTouchDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        function getPdfConfig() {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            const useMobileLayout = isTouchDevice && !isLandscape;
-            return {
-                isMobile: useMobileLayout,
-                url: useMobileLayout ? "mobile.pdf" : "desktop.pdf"
-            };
-        }
-
-        let config = getPdfConfig();
-        let pdfUrl = config.url;
-        let isMobile = config.isMobile;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        const pdfUrl = isMobile ? "mobile.pdf" : "desktop.pdf";
 
         let currentPage = 1;
         let totalPages = 0;
@@ -320,7 +300,6 @@
             }
 
             const wrapper = document.getElementById("wrapper-" + pageNumber);
-            if (!wrapper) return;
             wrapper.style.width = displayWidth + "px";
             wrapper.style.height = displayHeight + "px";
 
@@ -376,13 +355,8 @@
 
         async function initPDF() {
             try {
-                config = getPdfConfig();
-                pdfUrl = config.url;
-                isMobile = config.isMobile;
-
                 loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = loadedPdfDocument.numPages;
-                currentPage = 1;
                 pageCounter.textContent = `1 / ${totalPages}`;
 
                 container.innerHTML = "";
@@ -410,13 +384,11 @@
                     }, 100);
 
                     setTimeout(() => loader.remove(), 800);
-                }, 1000);
+                }, 3000);
 
                 for (let i = 2; i <= totalPages; i++) {
                     await renderSinglePage(i);
                 }
-
-                updateNavigation();
 
             } catch (err) {
                 console.error("Errore PDF:", err);
@@ -442,32 +414,7 @@
         nextBtn.addEventListener("click", goToNextPage);
         prevBtn.addEventListener("click", goToPrevPage);
 
-        // Supporto Swipe con il dito per smartphone in orizzontale
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        container.addEventListener("touchstart", (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-
-        container.addEventListener("touchend", (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
-
-        function handleSwipe() {
-            if (isMobile) return; 
-            const threshold = 50; 
-            if (touchEndX < touchStartX - threshold) {
-                goToNextPage();
-            }
-            if (touchEndX > touchStartX + threshold) {
-                goToPrevPage();
-            }
-        }
-
         window.addEventListener("keydown", (e) => {
-            if (isMobile) return;
             if (e.key === "ArrowRight" || e.key === " ") {
                 goToNextPage();
             } else if (e.key === "ArrowLeft") {
@@ -501,16 +448,11 @@
             }
         });
 
-        let lastIsMobile = isMobile;
         let resizeTimeout;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(async () => {
-                const currentConfig = getPdfConfig();
-                if (currentConfig.isMobile !== lastIsMobile) {
-                    lastIsMobile = currentConfig.isMobile;
-                    initPDF(); 
-                } else if (!isMobile && loadedPdfDocument) {
+                if (!isMobile && loadedPdfDocument) {
                     for (let i = 1; i <= totalPages; i++) {
                         const wrapper = document.getElementById("wrapper-" + i);
                         if (wrapper) wrapper.innerHTML = "";
@@ -518,7 +460,7 @@
                     }
                     updateNavigation();
                 }
-            }, 300);
+            }, 200);
         });
     </script>
 </body>
