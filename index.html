@@ -63,7 +63,7 @@
             100% { width: 100%; }
         }
 
-        /* SLIDER CONTAINER DESKTOP */
+        /* SLIDER CONTAINER */
         #pdf-container {
             display: flex;
             width: 100vw;
@@ -128,7 +128,7 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI DELICATI E SEMITRASPARENTI */
+        /* CONTROLLI UI DESKTOP */
         .ui-btn {
             position: fixed;
             background: rgba(0, 0, 0, 0.35);
@@ -202,8 +202,8 @@
             pointer-events: none;
         }
 
-        /* RESPONSIVE SMARTPHONE */
-        @media (max-width: 768px) {
+        /* MODIFICA DINAMICA PER SMARTPHONE IN VERTICALE */
+        @media (max-width: 768px) and (orientation: portrait) {
             body, html {
                 overflow-x: hidden;
                 overflow-y: auto;
@@ -237,6 +237,13 @@
                 display: none;
             }
         }
+
+        /* SE SMARTPHONE È IN ORIZZONTALE O DESKTOP */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .ui-btn, #page-counter {
+                display: none; /* Nasconde i pulsanti anche in orizzontale su mobile come richiesto */
+            }
+        }
     </style>
 </head>
 
@@ -266,8 +273,23 @@
         const fullscreenBtn = document.getElementById("fullscreen-btn");
         const pageCounter = document.getElementById("page-counter");
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-        const pdfUrl = isMobile ? "mobile.pdf" : "desktop.pdf";
+        // Rileva se è uno smartphone/tablet basato su userAgent
+        const isTouchDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Determina se usare la modalità mobile verticale o desktop orizzontale
+        function getPdfConfig() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            // Se è un dispositivo mobile in verticale usa mobile.pdf, altrimenti desktop.pdf (anche se mobile è in orizzontale)
+            const useMobileLayout = isTouchDevice && !isLandscape;
+            return {
+                isMobile: useMobileLayout,
+                url: useMobileLayout ? "mobile.pdf" : "desktop.pdf"
+            };
+        }
+
+        let config = getPdfConfig();
+        let pdfUrl = config.url;
+        let isMobile = config.mobile;
 
         let currentPage = 1;
         let totalPages = 0;
@@ -300,6 +322,7 @@
             }
 
             const wrapper = document.getElementById("wrapper-" + pageNumber);
+            if (!wrapper) return;
             wrapper.style.width = displayWidth + "px";
             wrapper.style.height = displayHeight + "px";
 
@@ -355,8 +378,13 @@
 
         async function initPDF() {
             try {
+                config = getPdfConfig();
+                pdfUrl = config.url;
+                isMobile = config.isMobile;
+
                 loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = loadedPdfDocument.numPages;
+                currentPage = 1;
                 pageCounter.textContent = `1 / ${totalPages}`;
 
                 container.innerHTML = "";
@@ -384,11 +412,13 @@
                     }, 100);
 
                     setTimeout(() => loader.remove(), 800);
-                }, 3000);
+                }, 1000);
 
                 for (let i = 2; i <= totalPages; i++) {
                     await renderSinglePage(i);
                 }
+
+                updateNavigation();
 
             } catch (err) {
                 console.error("Errore PDF:", err);
@@ -414,7 +444,32 @@
         nextBtn.addEventListener("click", goToNextPage);
         prevBtn.addEventListener("click", goToPrevPage);
 
+        // Supporto Swipe Touch per mobile in orizzontale o tablet
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        container.addEventListener("touchstart", (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        container.addEventListener("touchend", (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            if (isMobile) return; // Se è in modalità verticale scorre normalmente in alto/basso
+            const threshold = 50; // Soglia minima in pixel per considerare lo swipe
+            if (touchEndX < touchStartX - threshold) {
+                goToNextPage();
+            }
+            if (touchEndX > touchStartX + threshold) {
+                goToPrevPage();
+            }
+        }
+
         window.addEventListener("keydown", (e) => {
+            if (isMobile) return;
             if (e.key === "ArrowRight" || e.key === " ") {
                 goToNextPage();
             } else if (e.key === "ArrowLeft") {
@@ -448,11 +503,17 @@
             }
         });
 
+        // Ricarica la pagina solo se cambia lo stato da verticale a orizzontale (o viceversa)
+        let lastIsMobile = isMobile;
         let resizeTimeout;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(async () => {
-                if (!isMobile && loadedPdfDocument) {
+                const currentConfig = getPdfConfig();
+                if (currentConfig.isMobile !== lastIsMobile) {
+                    lastIsMobile = currentConfig.isMobile;
+                    initPDF(); // Ricarica il layout e il file corretto in base alla rotazione
+                } else if (!isMobile && loadedPdfDocument) {
                     for (let i = 1; i <= totalPages; i++) {
                         const wrapper = document.getElementById("wrapper-" + i);
                         if (wrapper) wrapper.innerHTML = "";
@@ -460,7 +521,7 @@
                     }
                     updateNavigation();
                 }
-            }, 200);
+            }, 300);
         });
     </script>
 </body>
