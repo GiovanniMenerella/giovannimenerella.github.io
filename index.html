@@ -128,7 +128,7 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI DESKTOP */
+        /* CONTROLLI UI DESKTOP (VISIBILI SOLO SU PC) */
         .ui-btn {
             position: fixed;
             background: rgba(0, 0, 0, 0.35);
@@ -202,7 +202,7 @@
             pointer-events: none;
         }
 
-        /* MODIFICA DINAMICA PER SMARTPHONE IN VERTICALE */
+        /* MEDIA QUERY: SMARTPHONE IN VERTICALE */
         @media (max-width: 768px) and (orientation: portrait) {
             body, html {
                 overflow-x: hidden;
@@ -234,14 +234,14 @@
             }
 
             .ui-btn, #page-counter {
-                display: none;
+                display: none !important;
             }
         }
 
-        /* SE SMARTPHONE È IN ORIZZONTALE O DESKTOP */
+        /* MEDIA QUERY: SMARTPHONE IN ORIZZONTALE (LANDSCAPE) -> NASCONDE OGNI BOTTONE/CONTATORE */
         @media (max-width: 768px) and (orientation: landscape) {
             .ui-btn, #page-counter {
-                display: none; /* Nasconde i pulsanti anche in orizzontale su mobile come richiesto */
+                display: none !important;
             }
         }
     </style>
@@ -255,6 +255,7 @@
         </div>
     </div>
 
+    <!-- Pulsanti di navigazione e UI (Visibili solo su Desktop) -->
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
     <button id="prev-btn" class="ui-btn nav-btn" aria-label="Pagina precedente">&#10094;</button>
     <button id="next-btn" class="ui-btn nav-btn" aria-label="Pagina successiva">&#10095;</button>
@@ -273,13 +274,10 @@
         const fullscreenBtn = document.getElementById("fullscreen-btn");
         const pageCounter = document.getElementById("page-counter");
 
-        // Rileva se è uno smartphone/tablet basato su userAgent
         const isTouchDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // Determina se usare la modalità mobile verticale o desktop orizzontale
         function getPdfConfig() {
             const isLandscape = window.innerWidth > window.innerHeight;
-            // Se è un dispositivo mobile in verticale usa mobile.pdf, altrimenti desktop.pdf (anche se mobile è in orizzontale)
             const useMobileLayout = isTouchDevice && !isLandscape;
             return {
                 isMobile: useMobileLayout,
@@ -289,7 +287,7 @@
 
         let config = getPdfConfig();
         let pdfUrl = config.url;
-        let isMobile = config.mobile;
+        let isMobile = config.isMobile;
 
         let currentPage = 1;
         let totalPages = 0;
@@ -444,7 +442,7 @@
         nextBtn.addEventListener("click", goToNextPage);
         prevBtn.addEventListener("click", goToPrevPage);
 
-        // Supporto Swipe Touch per mobile in orizzontale o tablet
+        // Supporto Swipe con il dito per smartphone in orizzontale
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -458,8 +456,8 @@
         }, { passive: true });
 
         function handleSwipe() {
-            if (isMobile) return; // Se è in modalità verticale scorre normalmente in alto/basso
-            const threshold = 50; // Soglia minima in pixel per considerare lo swipe
+            if (isMobile) return; 
+            const threshold = 50; 
             if (touchEndX < touchStartX - threshold) {
                 goToNextPage();
             }
@@ -503,7 +501,6 @@
             }
         });
 
-        // Ricarica la pagina solo se cambia lo stato da verticale a orizzontale (o viceversa)
         let lastIsMobile = isMobile;
         let resizeTimeout;
         window.addEventListener("resize", () => {
@@ -512,7 +509,7 @@
                 const currentConfig = getPdfConfig();
                 if (currentConfig.isMobile !== lastIsMobile) {
                     lastIsMobile = currentConfig.isMobile;
-                    initPDF(); // Ricarica il layout e il file corretto in base alla rotazione
+                    initPDF(); 
                 } else if (!isMobile && loadedPdfDocument) {
                     for (let i = 1; i <= totalPages; i++) {
                         const wrapper = document.getElementById("wrapper-" + i);
