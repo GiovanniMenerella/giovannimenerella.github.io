@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON VIDEO "FIRMA" */
+        /* SCHERMATA INTRO NERA CON VIDEO "firma" */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,7 +33,7 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), filter 1s ease;
+            transition: opacity 0.8s ease, filter 0.8s ease;
         }
 
         /* SFOCATURA E DISSOLVENZA AL TERMINE DEL VIDEO */
@@ -44,12 +44,11 @@
         }
 
         #intro-video {
-            max-width: 80vw;
-            max-height: 80vh;
+            max-width: 85vw;
+            max-height: 85vh;
             width: auto;
             height: auto;
             object-fit: contain;
-            border-radius: 4px;
         }
 
         /* SLIDER CONTAINER DESKTOP */
@@ -231,13 +230,10 @@
 
 <body>
 
-    <!-- Intro Nera con Video Firma forzato in autoplay -->
+    <!-- Intro Nera con Video firma in minuscolo -->
     <div id="loader">
         <video id="intro-video" autoplay muted playsinline preload="auto">
-            <source src="Firma.mp4" type="video/mp4">
-            <source src="Firma.webm" type="video/webm">
-            <source src="Firma.mov" type="video/quicktime">
-            Il tuo browser non supporta la riproduzione video.
+            <source src="firma.mp4" type="video/mp4">
         </video>
     </div>
 
@@ -266,6 +262,7 @@
         let currentPage = 1;
         let totalPages = 0;
         let loadedPdfDocument = null;
+        let isIntroDismissed = false;
 
         function updateNavigation() {
             if (isMobile) return;
@@ -273,6 +270,40 @@
             pageCounter.textContent = `${currentPage} / ${totalPages}`;
             prevBtn.classList.toggle("disabled", currentPage === 1);
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
+        }
+
+        // Funzione per chiudere l'intro con dissolvenza/blur e fare partire l'animazione del PDF
+        function dismissIntro() {
+            if (isIntroDismissed) return;
+            isIntroDismissed = true;
+
+            loader.classList.add("exit");
+
+            const firstBox = document.getElementById("page-box-1");
+            setTimeout(() => {
+                if (firstBox) firstBox.classList.add("animate-in");
+            }, 100);
+
+            setTimeout(() => {
+                if (loader.parentNode) loader.remove();
+            }, 900);
+        }
+
+        // Sincronizzazione pulita con la fine naturale del video
+        if (introVideo) {
+            introVideo.addEventListener("ended", dismissIntro);
+            introVideo.addEventListener("error", () => {
+                console.warn("Errore di riproduzione video, apertura immediata.");
+                dismissIntro();
+            });
+
+            // Fallback di sicurezza nel caso il video duri molto o non risponda
+            setTimeout(dismissIntro, 8000);
+
+            introVideo.play().catch(() => {
+                console.warn("Autoplay video bloccato, sblocco forzato.");
+                dismissIntro();
+            });
         }
 
         async function renderSinglePage(pageNumber) {
@@ -347,34 +378,6 @@
             }
         }
 
-        // Promessa di completamento del video con fallback di sicurezza (massimo 6 secondi)
-        const videoFinishedPromise = new Promise((resolve) => {
-            if (!introVideo) {
-                resolve();
-                return;
-            }
-
-            let isResolved = false;
-            function finish() {
-                if (!isResolved) {
-                    isResolved = true;
-                    resolve();
-                }
-            }
-
-            introVideo.addEventListener("ended", finish);
-            introVideo.addEventListener("error", finish);
-
-            // Fallback di sicurezza nel caso il browser blocchi l'autoplay del video
-            setTimeout(finish, 6000);
-
-            // Forza esplicitamente la riproduzione via codice
-            introVideo.play().catch(() => {
-                // Se il browser impedisce il play automatico, sblocca subito
-                finish();
-            });
-        });
-
         async function initPDF() {
             try {
                 loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -395,35 +398,23 @@
                     container.appendChild(pageBox);
                 }
 
-                // Renderizza subito la prima pagina in background
-                const firstPageRendered = renderSinglePage(1);
+                // Renderizza prima la pagina 1 in background durante l'intro
+                await renderSinglePage(1);
 
-                // Attende la fine del video (o il fallback) e il rendering della pagina 1
-                await Promise.all([firstPageRendered, videoFinishedPromise]);
-
-                // Dissolvenza con effetto blur del loader
-                loader.classList.add("exit");
-
-                const firstBox = document.getElementById("page-box-1");
-                setTimeout(() => {
-                    if (firstBox) firstBox.classList.add("animate-in");
-                }, 100);
-
-                setTimeout(() => loader.remove(), 1000);
-
-                // Caricamento in background delle restanti pagine
+                // Caricamento in background delle pagine successive
                 for (let i = 2; i <= totalPages; i++) {
-                    await renderSinglePage(i);
+                    renderSinglePage(i);
                 }
 
             } catch (err) {
-                console.error("Errore PDF:", err);
-                loader.classList.add("exit");
+                console.error("Errore nel caricamento del PDF:", err);
+                dismissIntro();
             }
         }
 
         initPDF();
 
+        // CONTROLLI NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
