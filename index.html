@@ -33,15 +33,7 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: opacity, filter;
-        }
-
-        /* DISSOLVENZA E SFOCATURA INTENSA ALLA FINE DEL VIDEO */
-        #loader.exit {
-            opacity: 0;
-            filter: blur(25px);
-            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         #intro-video {
@@ -50,12 +42,30 @@
             width: auto;
             height: auto;
             object-fit: contain;
-            transition: filter 1.2s ease, transform 1.2s ease;
         }
 
-        #loader.exit #intro-video {
-            filter: blur(20px);
-            transform: scale(1.05);
+        /* LIVELLO OVERLAY PER FORZARE LO SFOCATO (BACKDROP BLUR) */
+        #blur-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            pointer-events: none;
+            transition: backdrop-filter 1s ease-out, -webkit-backdrop-filter 1s ease-out, background 1s ease-out;
+            z-index: 2;
+        }
+
+        /* ATTIVAZIONE EFFETTO SFOCATURA FLUIDA AL TERMINE DEL VIDEO */
+        #loader.start-blur #blur-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+        }
+
+        #loader.exit {
+            opacity: 0;
+            pointer-events: none;
         }
 
         /* SLIDER CONTAINER DESKTOP */
@@ -237,11 +247,12 @@
 
 <body>
 
-    <!-- Intro Nera con Video firma -->
+    <!-- Intro Nera con Video firma e strato di sfocatura dedicato -->
     <div id="loader">
         <video id="intro-video" autoplay muted playsinline preload="auto">
             <source src="firma.mp4" type="video/mp4">
         </video>
+        <div id="blur-overlay"></div>
     </div>
 
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
@@ -279,38 +290,40 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        // Dissolvenza graduale con sfocatura e avvio animazione PDF
+        // Funzione con effetto sfocatura tramite overlay e transizione graduale
         function dismissIntro() {
             if (isIntroDismissed) return;
             isIntroDismissed = true;
 
-            // Attiva la classe CSS con la sfocatura e l'opacità zero
-            loader.classList.add("exit");
+            // 1. Avvia l'effetto di sfocatura sullo schermo
+            loader.classList.add("start-blur");
 
-            // Avvia la transizione di entrata della prima pagina a metà della sfocatura
-            const firstBox = document.getElementById("page-box-1");
+            // 2. Dopo 600ms sfuma in dissolvenza il contenitore
             setTimeout(() => {
-                if (firstBox) firstBox.classList.add("animate-in");
-            }, 300);
+                loader.classList.add("exit");
 
-            // Rimuove l'elemento HTML solo dopo che l'animazione di blur (1.2s) è completamente terminata
+                const firstBox = document.getElementById("page-box-1");
+                if (firstBox) firstBox.classList.add("animate-in");
+            }, 600);
+
+            // 3. Rimuove il loader solo ad animazione conclusa
             setTimeout(() => {
                 if (loader.parentNode) loader.remove();
-            }, 1200);
+            }, 1400);
         }
 
-        // Sincronizzazione al termine del video
+        // Sincronizzazione alla fine naturale del video
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", () => {
-                console.warn("Errore di riproduzione video, apertura immediata.");
+                console.warn("Errore video, apertura immediata.");
                 dismissIntro();
             });
 
             setTimeout(dismissIntro, 8000);
 
             introVideo.play().catch(() => {
-                console.warn("Autoplay video bloccato, sblocco forzato.");
+                console.warn("Autoplay bloccato, sblocco forzato.");
                 dismissIntro();
             });
         }
