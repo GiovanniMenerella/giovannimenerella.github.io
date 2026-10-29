@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* SCHERMATA INTRO NERA CON VIDEO "firma" */
+        /* CONTENITORE SCHERMATA INTRO */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,10 +33,18 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: opacity, filter;
         }
 
-        #intro-video {
+        /* EFFETTO SFOCATURA E DISSOLVENZA VISIBILE */
+        #loader.start-blur {
+            filter: blur(35px) scale(1.08);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #intro-video, #video-snapshot {
             max-width: 85vw;
             max-height: 85vh;
             width: auto;
@@ -44,28 +52,8 @@
             object-fit: contain;
         }
 
-        /* LIVELLO OVERLAY PER FORZARE LO SFOCATO (BACKDROP BLUR) */
-        #blur-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0);
-            backdrop-filter: blur(0px);
-            -webkit-backdrop-filter: blur(0px);
-            pointer-events: none;
-            transition: backdrop-filter 1s ease-out, -webkit-backdrop-filter 1s ease-out, background 1s ease-out;
-            z-index: 2;
-        }
-
-        /* ATTIVAZIONE EFFETTO SFOCATURA FLUIDA AL TERMINE DEL VIDEO */
-        #loader.start-blur #blur-overlay {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-        }
-
-        #loader.exit {
-            opacity: 0;
-            pointer-events: none;
+        #video-snapshot {
+            display: none;
         }
 
         /* SLIDER CONTAINER DESKTOP */
@@ -247,12 +235,12 @@
 
 <body>
 
-    <!-- Intro Nera con Video firma e strato di sfocatura dedicato -->
+    <!-- Intro Nera con Video firma e Canvas per lo Snapshot della sfocatura -->
     <div id="loader">
         <video id="intro-video" autoplay muted playsinline preload="auto">
             <source src="firma.mp4" type="video/mp4">
         </video>
-        <div id="blur-overlay"></div>
+        <canvas id="video-snapshot"></canvas>
     </div>
 
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
@@ -269,6 +257,7 @@
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
         const introVideo = document.getElementById("intro-video");
+        const videoSnapshot = document.getElementById("video-snapshot");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -290,40 +279,50 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        // Funzione con effetto sfocatura tramite overlay e transizione graduale
+        // Funzione che cattura un frame statico del video e applica la sfocatura
         function dismissIntro() {
             if (isIntroDismissed) return;
             isIntroDismissed = true;
 
-            // 1. Avvia l'effetto di sfocatura sullo schermo
-            loader.classList.add("start-blur");
+            try {
+                // Prende uno snapshot dal video per bypassare il blocco hardware dei browser
+                if (introVideo && introVideo.readyState >= 2) {
+                    videoSnapshot.width = introVideo.videoWidth || 1280;
+                    videoSnapshot.height = introVideo.videoHeight || 720;
+                    const ctx = videoSnapshot.getContext("2d");
+                    ctx.drawImage(introVideo, 0, 0, videoSnapshot.width, videoSnapshot.height);
+                    introVideo.style.display = "none";
+                    videoSnapshot.style.display = "block";
+                }
+            } catch (e) {
+                console.warn("Impossibile generare lo snapshot video:", e);
+            }
 
-            // 2. Dopo 600ms sfuma in dissolvenza il contenitore
-            setTimeout(() => {
-                loader.classList.add("exit");
+            // Attiva la sfocatura fluida sul frame statico
+            requestAnimationFrame(() => {
+                loader.classList.add("start-blur");
 
-                const firstBox = document.getElementById("page-box-1");
-                if (firstBox) firstBox.classList.add("animate-in");
-            }, 600);
+                // Avvia la risalita del portfolio a metà della dissolvenza
+                setTimeout(() => {
+                    const firstBox = document.getElementById("page-box-1");
+                    if (firstBox) firstBox.classList.add("animate-in");
+                }, 400);
 
-            // 3. Rimuove il loader solo ad animazione conclusa
-            setTimeout(() => {
-                if (loader.parentNode) loader.remove();
-            }, 1400);
+                // Rimuove l'intro solo al termine dell'animazione
+                setTimeout(() => {
+                    if (loader.parentNode) loader.remove();
+                }, 1300);
+            });
         }
 
-        // Sincronizzazione alla fine naturale del video
+        // Eventi di fine video
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
-            introVideo.addEventListener("error", () => {
-                console.warn("Errore video, apertura immediata.");
-                dismissIntro();
-            });
+            introVideo.addEventListener("error", dismissIntro);
 
             setTimeout(dismissIntro, 8000);
 
             introVideo.play().catch(() => {
-                console.warn("Autoplay bloccato, sblocco forzato.");
                 dismissIntro();
             });
         }
