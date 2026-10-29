@@ -24,7 +24,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* CONTENITORE SCHERMATA INTRO */
+        /* SCHERMATA INTRO NERA CON VIDEO */
         #loader {
             position: fixed;
             inset: 0;
@@ -33,27 +33,20 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-            will-change: opacity, filter;
+            transition: opacity 0.8s ease;
         }
 
-        /* EFFETTO SFOCATURA E DISSOLVENZA VISIBILE */
-        #loader.start-blur {
-            filter: blur(35px) scale(1.08);
+        #loader.exit {
             opacity: 0;
             pointer-events: none;
         }
 
-        #intro-video, #video-snapshot {
+        #intro-video {
             max-width: 85vw;
             max-height: 85vh;
             width: auto;
             height: auto;
             object-fit: contain;
-        }
-
-        #video-snapshot {
-            display: none;
         }
 
         /* SLIDER CONTAINER DESKTOP */
@@ -76,11 +69,11 @@
             justify-content: center;
         }
 
-        /* ANIMAZIONE SCROLL + ZOOM + SFOCATURA PRIMA PAGINA */
+        /* ANIMAZIONE SCROLL + ZOOM PRIMA PAGINA */
         .page-box:first-child .canvas-wrapper {
             opacity: 0;
             transform: translateY(140px) scale(1.12);
-            filter: blur(10px);
+            filter: blur(8px);
             transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
                         transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
                         filter 1.2s ease;
@@ -235,12 +228,11 @@
 
 <body>
 
-    <!-- Intro Nera con Video firma e Canvas per lo Snapshot della sfocatura -->
+    <!-- Intro Nera con Video firma -->
     <div id="loader">
         <video id="intro-video" autoplay muted playsinline preload="auto">
             <source src="firma.mp4" type="video/mp4">
         </video>
-        <canvas id="video-snapshot"></canvas>
     </div>
 
     <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
@@ -257,7 +249,6 @@
         const container = document.getElementById("pdf-container");
         const loader = document.getElementById("loader");
         const introVideo = document.getElementById("intro-video");
-        const videoSnapshot = document.getElementById("video-snapshot");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -279,48 +270,29 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        // Funzione che cattura un frame statico del video e applica la sfocatura
+        // Chiusura dell'intro alla fine del video
         function dismissIntro() {
             if (isIntroDismissed) return;
             isIntroDismissed = true;
 
-            try {
-                // Prende uno snapshot dal video per bypassare il blocco hardware dei browser
-                if (introVideo && introVideo.readyState >= 2) {
-                    videoSnapshot.width = introVideo.videoWidth || 1280;
-                    videoSnapshot.height = introVideo.videoHeight || 720;
-                    const ctx = videoSnapshot.getContext("2d");
-                    ctx.drawImage(introVideo, 0, 0, videoSnapshot.width, videoSnapshot.height);
-                    introVideo.style.display = "none";
-                    videoSnapshot.style.display = "block";
-                }
-            } catch (e) {
-                console.warn("Impossibile generare lo snapshot video:", e);
-            }
+            loader.classList.add("exit");
 
-            // Attiva la sfocatura fluida sul frame statico
-            requestAnimationFrame(() => {
-                loader.classList.add("start-blur");
+            const firstBox = document.getElementById("page-box-1");
+            setTimeout(() => {
+                if (firstBox) firstBox.classList.add("animate-in");
+            }, 100);
 
-                // Avvia la risalita del portfolio a metà della dissolvenza
-                setTimeout(() => {
-                    const firstBox = document.getElementById("page-box-1");
-                    if (firstBox) firstBox.classList.add("animate-in");
-                }, 400);
-
-                // Rimuove l'intro solo al termine dell'animazione
-                setTimeout(() => {
-                    if (loader.parentNode) loader.remove();
-                }, 1300);
-            });
+            setTimeout(() => {
+                if (loader.parentNode) loader.remove();
+            }, 800);
         }
 
-        // Eventi di fine video
+        // Sincronizzazione con il video
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", dismissIntro);
 
-            setTimeout(dismissIntro, 8000);
+            setTimeout(dismissIntro, 10000); // Fallback di sicurezza di 10 secondi
 
             introVideo.play().catch(() => {
                 dismissIntro();
