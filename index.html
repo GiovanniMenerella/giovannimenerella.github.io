@@ -33,13 +33,14 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.8s ease, filter 0.8s ease;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: opacity, filter;
         }
 
-        /* SFOCATURA E DISSOLVENZA AL TERMINE DEL VIDEO */
+        /* DISSOLVENZA E SFOCATURA INTENSA ALLA FINE DEL VIDEO */
         #loader.exit {
             opacity: 0;
-            filter: blur(20px);
+            filter: blur(25px);
             pointer-events: none;
         }
 
@@ -49,6 +50,12 @@
             width: auto;
             height: auto;
             object-fit: contain;
+            transition: filter 1.2s ease, transform 1.2s ease;
+        }
+
+        #loader.exit #intro-video {
+            filter: blur(20px);
+            transform: scale(1.05);
         }
 
         /* SLIDER CONTAINER DESKTOP */
@@ -75,7 +82,7 @@
         .page-box:first-child .canvas-wrapper {
             opacity: 0;
             transform: translateY(140px) scale(1.12);
-            filter: blur(8px);
+            filter: blur(10px);
             transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
                         transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
                         filter 1.2s ease;
@@ -230,7 +237,7 @@
 
 <body>
 
-    <!-- Intro Nera con Video firma in minuscolo -->
+    <!-- Intro Nera con Video firma -->
     <div id="loader">
         <video id="intro-video" autoplay muted playsinline preload="auto">
             <source src="firma.mp4" type="video/mp4">
@@ -272,24 +279,27 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        // Funzione per chiudere l'intro con dissolvenza/blur e fare partire l'animazione del PDF
+        // Dissolvenza graduale con sfocatura e avvio animazione PDF
         function dismissIntro() {
             if (isIntroDismissed) return;
             isIntroDismissed = true;
 
+            // Attiva la classe CSS con la sfocatura e l'opacità zero
             loader.classList.add("exit");
 
+            // Avvia la transizione di entrata della prima pagina a metà della sfocatura
             const firstBox = document.getElementById("page-box-1");
             setTimeout(() => {
                 if (firstBox) firstBox.classList.add("animate-in");
-            }, 100);
+            }, 300);
 
+            // Rimuove l'elemento HTML solo dopo che l'animazione di blur (1.2s) è completamente terminata
             setTimeout(() => {
                 if (loader.parentNode) loader.remove();
-            }, 900);
+            }, 1200);
         }
 
-        // Sincronizzazione pulita con la fine naturale del video
+        // Sincronizzazione al termine del video
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", () => {
@@ -297,7 +307,6 @@
                 dismissIntro();
             });
 
-            // Fallback di sicurezza nel caso il video duri molto o non risponda
             setTimeout(dismissIntro, 8000);
 
             introVideo.play().catch(() => {
@@ -398,10 +407,8 @@
                     container.appendChild(pageBox);
                 }
 
-                // Renderizza prima la pagina 1 in background durante l'intro
                 await renderSinglePage(1);
 
-                // Caricamento in background delle pagine successive
                 for (let i = 2; i <= totalPages; i++) {
                     renderSinglePage(i);
                 }
@@ -414,7 +421,6 @@
 
         initPDF();
 
-        // CONTROLLI NAVIGAZIONE
         function goToNextPage() {
             if (currentPage < totalPages) {
                 currentPage++;
