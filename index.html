@@ -278,28 +278,42 @@
             nextBtn.classList.toggle("disabled", currentPage === totalPages);
         }
 
-        // Chiusura dell'intro alla fine del video
+        // Funzione per chiudere l'intro e fare partire l'animazione della pagina 1
         function dismissIntro() {
             if (isIntroDismissed) return;
             isIntroDismissed = true;
 
             loader.classList.add("exit");
 
+            // Forza l'attivazione dell'animazione sulla prima pagina
             const firstBox = document.getElementById("page-box-1");
-            setTimeout(() => {
-                if (firstBox) firstBox.classList.0 ? firstBox.classList.add("animate-in") : firstBox.classList.add("animate-in");
-            }, 100);
+            if (firstBox) {
+                // Piccolo timeout per assicurarsi che il DOM abbia renderizzato l'elemento
+                setTimeout(() => {
+                    firstBox.classList.add("animate-in");
+                }, 50);
+            }
 
             setTimeout(() => {
-                if (loader.parentNode) loader.remove();
+                if (loader && loader.parentNode) {
+                    loader.remove();
+                }
             }, 800);
         }
 
+        // Gestione eventi video e fallback di sicurezza
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", dismissIntro);
-            setTimeout(dismissIntro, 10000);
-            introVideo.play().catch(() => { dismissIntro(); });
+            
+            // Fallback ridotto a 5 secondi nel caso il video non parta o dia problemi sui browser mobile
+            setTimeout(dismissIntro, 5000);
+
+            introVideo.play().catch(() => {
+                dismissIntro();
+            });
+        } else {
+            dismissIntro();
         }
 
         async function renderSinglePage(pageNumber, wrapper) {
@@ -374,7 +388,6 @@
 
         async function initPortfolio() {
             try {
-                // Carica il documento PDF (che adesso conterrà le pagine dalla 3 in poi, oppure gestisci il numero di pagine)
                 loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
                 
                 // Totale pagine = 1 (foto iniziale) + pagine del PDF rimanente
