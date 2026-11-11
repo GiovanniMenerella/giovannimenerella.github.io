@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giovanni Menerella - Fotografia & Visual</title>
     <style>
         * {
@@ -14,21 +14,10 @@
         body, html {
             width: 100%;
             height: 100%;
-            background-color: #000;
+            background-color: #000000;
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* Altezza totale del documento per consentire lo scroll fluido tra le 2 pagine */
-        body {
-            height: 200vh;
-        }
-
-        /* Blocco dello scroll iniziale finché c'è il video */
-        body.intro-active {
-            height: 100% !important;
-            overflow: hidden;
+            scroll-behavior: smooth;
         }
 
         /* Container Video Intro */
@@ -54,52 +43,41 @@
             object-fit: contain;
         }
 
-        /* PAGINA 1: Fissa in primo piano con effetto Parallax e sfocatura iniziale */
+        /* PAGINA 1 */
         #page-1 {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
+            position: relative;
+            width: 100%;
             height: 100vh;
-            height: 100dvh;
-            background-color: #000;
+            background-color: #000000;
             background-size: cover;
             background-position: center;
+            background-attachment: fixed; /* Parallasse nativo ultranitido per Desktop */
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
             padding-bottom: 60px;
-            z-index: 1;
             opacity: 0;
-            transform: scale(1.04) translateZ(0);
             filter: blur(15px);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                        filter 1.2s ease;
-            will-change: transform, opacity, filter;
+            transition: opacity 1.2s ease-out, filter 1.2s ease-out;
         }
 
         #page-1.show {
             opacity: 1;
-            transform: scale(1) translateZ(0);
             filter: blur(0px);
         }
 
-        /* Testo Pagina 1 */
         .text-block-1 {
             text-align: center;
             opacity: 0;
-            transform: translateY(30px) translateZ(0);
-            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s, 
-                        transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+            transform: translateY(20px);
+            transition: opacity 1s ease-out 0.4s, transform 1s ease-out 0.4s;
             z-index: 2;
-            will-change: transform, opacity;
         }
 
         #page-1.show .text-block-1 {
             opacity: 1;
-            transform: translateY(0) translateZ(0);
+            transform: translateY(0);
         }
 
         .text-block-1 h1 {
@@ -118,36 +96,30 @@
             color: #d1d1d1;
         }
 
-        /* PAGINA 2: Scorre sopra alla pagina 1 come una tenda elegante */
+        /* PAGINA 2 (Scorre sopra la pagina 1 come una scheda elegante) */
         #page-2 {
-            position: absolute;
-            top: 100vh;
-            top: 100dvh;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
             background-color: #ffffff;
             color: #111111;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
-            z-index: 2;
-            box-shadow: 0 -30px 50px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.8); /* Ombra stile scheda Apple */
         }
 
         .text-block-2 {
             opacity: 0;
-            transform: translateY(40px) scale(0.96) translateZ(0);
-            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-            will-change: transform, opacity;
+            transform: translateY(40px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         #page-2.in-view .text-block-2 {
             opacity: 1;
-            transform: translateY(0) scale(1) translateZ(0);
+            transform: translateY(0);
         }
 
         .text-block-2 h2 {
@@ -169,6 +141,7 @@
                 object-fit: cover;
             }
             #page-1 {
+                background-attachment: scroll; /* Su mobile l'attachment fixed causa bug grafici, usiamo lo scroll pulito */
                 padding-bottom: 50px;
             }
             .text-block-1 h1 {
@@ -188,7 +161,7 @@
         }
     </style>
 </head>
-<body class="intro-active">
+<body>
 
     <!-- Video Intro -->
     <div id="video-container">
@@ -223,9 +196,7 @@
             const video = document.getElementById("intro-video");
             const page1 = document.getElementById("page-1");
             const page2 = document.getElementById("page-2");
-            const textBlock1 = document.querySelector(".text-block-1");
 
-            // Riconoscimento dispositivo e impostazione immagine corretta
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
             page1.style.backgroundImage = `url('${bgImage}')`;
@@ -234,7 +205,6 @@
                 videoContainer.style.opacity = '0';
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
-                    document.body.classList.remove('intro-active');
                     page1.classList.add('show');
                 }, 800);
             }
@@ -244,35 +214,18 @@
                 onVideoEnd();
             });
 
-            // Effetto Parallasse fluido con velocità differenziata via GPU (requestAnimationFrame)
-            let ticking = false;
-            window.addEventListener("scroll", function() {
-                let scrollY = window.scrollY;
-                let maxH = window.innerHeight;
-
-                if (!ticking) {
-                    window.requestAnimationFrame(function() {
-                        if (scrollY <= maxH) {
-                            let progress = scrollY / maxH;
-                            
-                            // Velocità sfasate: lo sfondo si muove più lentamente e il testo scorre più velocemente verso l'alto
-                            page1.style.transform = `translate3d(0, ${-scrollY * 0.35}px, 0)`;
-                            textBlock1.style.transform = `translate3d(0, ${-scrollY * 0.65}px, 0)`;
-                            page1.style.opacity = `${1 - progress * 1.15}`;
-                        }
-
-                        // Attivazione dell'animazione della pagina 2 quando sale sullo schermo
-                        if (scrollY > maxH * 0.3) {
-                            page2.classList.add('in-view');
-                        } else {
-                            page2.classList.remove('in-view');
-                        }
-
-                        ticking = false;
-                    });
-                    ticking = true;
-                }
+            // Animazione di comparsa pulita per la seconda pagina
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        page2.classList.add('in-view');
+                    }
+                });
+            }, {
+                threshold: 0.25
             });
+
+            observer.observe(page2);
         });
     </script>
 </body>
