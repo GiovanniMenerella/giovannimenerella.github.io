@@ -188,7 +188,7 @@
             border-radius: 20px;
             font-size: 0.8rem;
             letter-spacing: 1.5px;
-            backdrop-filter: blur(10px);
+            backdrop-file: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.25);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -266,7 +266,7 @@
         const pdfUrl = isMobile ? "mobile.pdf" : "desktop.pdf";
 
         let currentPage = 1;
-        let totalPages = 0;
+        let totalPages = 1;
         let loadedPdfDocument = null;
         let isIntroDismissed = false;
 
@@ -285,10 +285,8 @@
 
             loader.classList.add("exit");
 
-            // Forza l'attivazione dell'animazione sulla prima pagina
             const firstBox = document.getElementById("page-box-1");
             if (firstBox) {
-                // Piccolo timeout per assicurarsi che il DOM abbia renderizzato l'elemento
                 setTimeout(() => {
                     firstBox.classList.add("animate-in");
                 }, 50);
@@ -301,102 +299,94 @@
             }, 800);
         }
 
-        // Gestione eventi video e fallback di sicurezza
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", dismissIntro);
-            
-            // Fallback ridotto a 5 secondi nel caso il video non parta o dia problemi sui browser mobile
             setTimeout(dismissIntro, 5000);
-
-            introVideo.play().catch(() => {
-                dismissIntro();
-            });
+            introVideo.play().catch(() => { dismissIntro(); });
         } else {
             dismissIntro();
         }
 
         async function renderSinglePage(pageNumber, wrapper) {
-            const page = await loadedPdfDocument.getPage(pageNumber);
-            const unscaledViewport = page.getViewport({ scale: 1.0 });
+            try {
+                const page = await loadedPdfDocument.getPage(pageNumber);
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
 
-            let displayWidth, displayHeight;
+                let displayWidth, displayHeight;
 
-            if (isMobile) {
-                displayWidth = window.innerWidth;
-                displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
-            } else {
-                const maxW = window.innerWidth;
-                const maxH = window.innerHeight;
-                const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
+                if (isMobile) {
+                    displayWidth = window.innerWidth;
+                    displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
+                } else {
+                    const maxW = window.innerWidth;
+                    const maxH = window.innerHeight;
+                    const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
 
-                displayWidth = Math.floor(unscaledViewport.width * fitScale);
-                displayHeight = Math.floor(unscaledViewport.height * fitScale);
-            }
+                    displayWidth = Math.floor(unscaledViewport.width * fitScale);
+                    displayHeight = Math.floor(unscaledViewport.height * fitScale);
+                }
 
-            wrapper.style.width = displayWidth + "px";
-            wrapper.style.height = displayHeight + "px";
+                wrapper.style.width = displayWidth + "px";
+                wrapper.style.height = displayHeight + "px";
 
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
 
-            const dpr = Math.max(window.devicePixelRatio || 1, 2);
-            const renderScale = (displayWidth / unscaledViewport.width) * dpr;
-            const renderViewport = page.getViewport({ scale: renderScale });
+                const dpr = Math.max(window.devicePixelRatio || 1, 2);
+                const renderScale = (displayWidth / unscaledViewport.width) * dpr;
+                const renderViewport = page.getViewport({ scale: renderScale });
 
-            canvas.width = renderViewport.width;
-            canvas.height = renderViewport.height;
-            canvas.style.width = displayWidth + "px";
-            canvas.style.height = displayHeight + "px";
+                canvas.width = renderViewport.width;
+                canvas.height = renderViewport.height;
+                canvas.style.width = displayWidth + "px";
+                canvas.style.height = displayHeight + "px";
 
-            wrapper.appendChild(canvas);
+                wrapper.appendChild(canvas);
 
-            await page.render({
-                canvasContext: context,
-                viewport: renderViewport
-            }).promise;
+                await page.render({
+                    canvasContext: context,
+                    viewport: renderViewport
+                }).promise;
 
-            const annotations = await page.getAnnotations();
-            if (annotations.length > 0) {
-                const layer = document.createElement("div");
-                layer.className = "annotationLayer";
-                wrapper.appendChild(layer);
+                const annotations = await page.getAnnotations();
+                if (annotations.length > 0) {
+                    const layer = document.createElement("div");
+                    layer.className = "annotationLayer";
+                    wrapper.appendChild(layer);
 
-                annotations.forEach(annotation => {
-                    if (annotation.subtype === 'Link' && annotation.url) {
-                        const link = document.createElement('a');
-                        link.href = annotation.url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
+                    annotations.forEach(annotation => {
+                        if (annotation.subtype === 'Link' && annotation.url) {
+                            const link = document.createElement('a');
+                            link.href = annotation.url;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
 
-                        const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
-                        const left = Math.min(rect[0], rect[2]);
-                        const top = Math.min(rect[1], rect[3]);
-                        const width = Math.abs(rect[0] - rect[2]);
-                        const height = Math.abs(rect[1] - rect[3]);
+                            const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
+                            const left = Math.min(rect[0], rect[2]);
+                            const top = Math.min(rect[1], rect[3]);
+                            const width = Math.abs(rect[0] - rect[2]);
+                            const height = Math.abs(rect[1] - rect[3]);
 
-                        link.style.left = (left / unscaledViewport.width * 100) + '%';
-                        link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
-                        link.style.width = (width / unscaledViewport.width * 100) + '%';
-                        link.style.height = (height / unscaledViewport.height * 100) + '%';
+                            link.style.left = (left / unscaledViewport.width * 100) + '%';
+                            link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
+                            link.style.width = (width / unscaledViewport.width * 100) + '%';
+                            link.style.height = (height / unscaledViewport.height * 100) + '%';
 
-                        layer.appendChild(link);
-                    }
-                });
+                            layer.appendChild(link);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Errore nel rendering della pagina PDF:", err);
             }
         }
 
         async function initPortfolio() {
             try {
-                loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
-                
-                // Totale pagine = 1 (foto iniziale) + pagine del PDF rimanente
-                totalPages = loadedPdfDocument.numPages + 1;
-                pageCounter.textContent = `1 / ${totalPages}`;
-
+                // 1. CREA SUBITO LA PRIMA PAGINA CON L'IMMAGINE (così compare subito anche se il PDF ci mette tempo)
                 container.innerHTML = "";
 
-                // PAGINA 1: Inseriamo l'immagine vuota "01 desktop.jpg" o "01 mobile.jpg" con l'animazione
                 const pageBox1 = document.createElement("div");
                 pageBox1.className = "page-box";
                 pageBox1.id = "page-box-1";
@@ -406,12 +396,23 @@
                 
                 const img1 = document.createElement("img");
                 img1.src = isMobile ? "01 mobile.jpg" : "01 desktop.jpg";
-                wrapper1.appendChild(img1);
                 
+                // Gestione errore se l'immagine non viene trovata
+                img1.onerror = () => {
+                    console.error("Impossibile caricare l'immagine:", img1.src);
+                };
+
+                wrapper1.appendChild(img1);
                 pageBox1.appendChild(wrapper1);
                 container.appendChild(pageBox1);
 
-                // PAGINE SUCCESSIVE DAL PDF
+                // 2. CARICA IL PDF IN SECONDO PIANO
+                loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
+                
+                totalPages = loadedPdfDocument.numPages + 1;
+                pageCounter.textContent = `1 / ${totalPages}`;
+
+                // Crea i contenitori per le pagine del PDF
                 for (let i = 2; i <= totalPages; i++) {
                     const pageBox = document.createElement("div");
                     pageBox.className = "page-box";
@@ -425,16 +426,17 @@
                     container.appendChild(pageBox);
                 }
 
-                // Renderizza la prima pagina PDF effettiva (corrispondente alla pagina 2 del portfolio)
+                // Renderizza la prima pagina del PDF (che sarà la pagina 2 del sito)
                 renderSinglePage(1, document.getElementById("wrapper-2"));
 
-                // Renderizza le altre pagine in background
+                // Renderizza il resto delle pagine
                 for (let i = 2; i <= loadedPdfDocument.numPages; i++) {
                     renderSinglePage(i, document.getElementById("wrapper-" + (i + 1)));
                 }
 
             } catch (err) {
-                console.error("Errore nel caricamento:", err);
+                console.error("Errore critico nell'inizializzazione:", err);
+                // Assicura che l'intro si tolga comunque in caso di errore grave
                 dismissIntro();
             }
         }
