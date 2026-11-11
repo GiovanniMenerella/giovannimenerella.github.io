@@ -1,474 +1,184 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Giovanni Menerella - Portfolio</title>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giovanni Menerella - Fotografia & Visual</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body, html {
             width: 100%;
             height: 100%;
-            background: #000000;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
-            -webkit-font-smoothing: antialiased;
+            background-color: #000;
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+            color: #ffffff;
         }
 
-        /* SCHERMATA INTRO NERA CON VIDEO (Rimpicciolito su desktop) */
-        #loader {
+        /* Container per il Video (Desktop ridimensionato) */
+        #video-container {
             position: fixed;
-            inset: 0;
-            background: #000000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background-color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease-out;
         }
 
-        #loader.exit {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #intro-video {
-            max-width: 85vw;
-            max-height: 85vh;
+        video {
+            max-width: 35vw;
+            max-height: 40vh;
             width: auto;
             height: auto;
             object-fit: contain;
         }
 
-        /* SLIDER CONTAINER DESKTOP */
-        #pdf-container {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            background: #000000;
-            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            will-change: transform;
-        }
-
-        .page-box {
+        /* Container per il Contenuto (Immagine + Testo) */
+        #main-container {
             position: relative;
-            flex: 0 0 100vw;
-            width: 100vw;
+            width: 100%;
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* ANIMAZIONE SCROLL + ZOOM PRIMA PAGINA */
-        .page-box:first-child .canvas-wrapper {
+            background-size: cover;
+            background-position: center;
             opacity: 0;
-            transform: translateY(140px) scale(1.12);
-            filter: blur(8px);
-            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-                        filter 1.2s ease;
+            transform: translateY(30px);
+            filter: blur(15px);
+            transition: opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s ease-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 60px;
         }
 
-        .page-box:first-child.animate-in .canvas-wrapper {
+        /* Stato attivo per l'immagine */
+        #main-container.show {
             opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0);
+            transform: translateY(0);
+            filter: blur(0px);
         }
 
-        .canvas-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
-            border-radius: 4px;
+        /* Block Testo */
+        .text-block {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease-out 0.6s, transform 1s ease-out 0.6s;
+            z-index: 2;
         }
 
-        canvas {
-            display: block;
-            border-radius: 4px;
+        /* Stato attivo per il testo */
+        #main-container.show .text-block {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        /* STRATO LINK CLICCABILI */
-        .annotationLayer {
-            position: absolute;
-            inset: 0;
-            z-index: 10;
-            pointer-events: none;
+        /* Titolo principale */
+        .text-block h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
         }
 
-        .annotationLayer a {
-            position: absolute;
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0);
-            cursor: pointer;
+        /* Sottotitolo (Ingrandito leggermente) */
+        .text-block p {
+            font-size: 1.15rem;
+            font-weight: 300;
+            letter-spacing: 7px;
+            text-transform: uppercase;
+            color: #d1d1d1;
         }
 
-        /* CONTROLLI UI DELICATI E SEMITRASPARENTI */
-        .ui-btn {
-            position: fixed;
-            background: rgba(0, 0, 0, 0.35);
-            color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: background 0.3s, border-color 0.3s, transform 0.2s, opacity 0.3s;
-            user-select: none;
-        }
-
-        .ui-btn:hover {
-            background: rgba(0, 0, 0, 0.65);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: #ffffff;
-            transform: scale(1.08);
-        }
-
-        .nav-btn {
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
-        }
-
-        .nav-btn:hover {
-            transform: translateY(-50%) scale(1.08);
-        }
-
-        .nav-btn.disabled {
-            opacity: 0.15;
-            cursor: default;
-            pointer-events: none;
-        }
-
-        #prev-btn { left: 25px; }
-        #next-btn { right: 25px; }
-
-        #fullscreen-btn {
-            top: 25px;
-            right: 25px;
-            width: 44px;
-            height: 44px;
-            font-size: 16px;
-        }
-
-        #page-counter {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.35);
-            color: rgba(255, 255, 255, 0.9);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            letter-spacing: 1.5px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        /* RESPONSIVE SMARTPHONE */
+        /* Adattamenti per Mobile */
         @media (max-width: 768px) {
-            body, html {
-                overflow-x: hidden;
-                overflow-y: auto;
-            }
-
-            #pdf-container {
+            #video-container {
                 display: block;
+            }
+            video {
                 width: 100%;
-                height: auto;
-                transform: none !important;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+                object-fit: cover;
             }
-
-            .page-box {
-                width: 100%;
-                height: auto;
-                padding: 0;
-                margin-bottom: 10px;
+            #main-container {
+                padding-bottom: 50px;
             }
-
-            .canvas-wrapper {
-                width: 100% !important;
-                height: auto !important;
+            .text-block h1 {
+                font-size: 1.4rem;
+                letter-spacing: 3px;
+                margin-bottom: 8px;
             }
-
-            canvas {
-                width: 100% !important;
-                height: auto !important;
-            }
-
-            .ui-btn, #page-counter {
-                display: none;
+            .text-block p {
+                font-size: 0.92rem;
+                letter-spacing: 5px;
             }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- Intro Nera con Video firma ridimensionato -->
-    <div id="loader">
-        <video id="intro-video" autoplay muted playsinline preload="auto">
+    <!-- Container Video -->
+    <div id="video-container">
+        <video id="intro-video" autoplay muted playsinline>
             <source src="firma.mp4" type="video/mp4">
+            Il tuo browser non supporta i video HTML5.
         </video>
     </div>
 
-    <button id="fullscreen-btn" class="ui-btn" title="Schermo Intero">&#x26F6;</button>
-    <button id="prev-btn" class="ui-btn nav-btn" aria-label="Pagina precedente">&#10094;</button>
-    <button id="next-btn" class="ui-btn nav-btn" aria-label="Pagina successiva">&#10095;</button>
-    <div id="page-counter">1 / --</div>
-
-    <div id="pdf-container"></div>
+    <!-- Container Immagine di Sfondo e Testi -->
+    <div id="main-container">
+        <div class="text-block">
+            <h1>GIOVANNI MENERELLA</h1>
+            <p>FOTOGRAFIA &amp; VISUAL</p>
+        </div>
+    </div>
 
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        document.addEventListener("DOMContentLoaded", function() {
+            const videoContainer = document.getElementById("video-container");
+            const video = document.getElementById("intro-video");
+            const mainContainer = document.getElementById("main-container");
 
-        const container = document.getElementById("pdf-container");
-        const loader = document.getElementById("loader");
-        const introVideo = document.getElementById("intro-video");
-        const prevBtn = document.getElementById("prev-btn");
-        const nextBtn = document.getElementById("next-btn");
-        const fullscreenBtn = document.getElementById("fullscreen-btn");
-        const pageCounter = document.getElementById("page-counter");
+            // Riconoscimento del dispositivo e impostazione dell'immagine di sfondo
+            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
+            
+            // Precaricamento dell'immagine di sfondo
+            mainContainer.style.backgroundImage = `url('${bgImage}')`;
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-        const pdfUrl = isMobile ? "mobile.pdf" : "desktop.pdf";
+            // Funzione eseguita alla fine del video
+            function onVideoEnd() {
+                // Sfumatura in uscita del video
+                videoContainer.style.opacity = '0';
+                
+                setTimeout(() => {
+                    videoContainer.style.display = 'none';
+                    // Attivazione animazione immagine + testo
+                    mainContainer.classList.add('show');
+                }, 800);
+            }
 
-        let currentPage = 1;
-        let totalPages = 0;
-        let loadedPdfDocument = null;
-        let isIntroDismissed = false;
+            // Evento di fine video
+            video.addEventListener("ended", onVideoEnd);
 
-        function updateNavigation() {
-            if (isMobile) return;
-            container.style.transform = `translateX(-${(currentPage - 1) * 100}vw)`;
-            pageCounter.textContent = `${currentPage} / ${totalPages}`;
-            prevBtn.classList.toggle("disabled", currentPage === 1);
-            nextBtn.classList.toggle("disabled", currentPage === totalPages);
-        }
-
-        // Chiusura dell'intro alla fine del video (tempi accorciati e fluidi)
-        function dismissIntro() {
-            if (isIntroDismissed) return;
-            isIntroDismissed = true;
-
-            loader.classList.add("exit");
-
-            const firstBox = document.getElementById("page-box-1");
-            setTimeout(() => {
-                if (firstBox) firstBox.classList.add("animate-in");
-            }, 20);
-
-            setTimeout(() => {
-                if (loader.parentNode) loader.remove();
-            }, 500);
-        }
-
-        // Sincronizzazione con il video
-        if (introVideo) {
-            introVideo.addEventListener("ended", dismissIntro);
-            introVideo.addEventListener("error", dismissIntro);
-
-            setTimeout(dismissIntro, 10000);
-
-            introVideo.play().catch(() => {
-                dismissIntro();
+            // Fallback nel caso in cui l'autoplay venga bloccato o ci siano problemi di riproduzione
+            video.play().catch(error => {
+                console.log("Autoplay non consentito o errore video:", error);
+                onVideoEnd();
             });
-        }
-
-        async function renderSinglePage(pageNumber) {
-            const page = await loadedPdfDocument.getPage(pageNumber);
-            const unscaledViewport = page.getViewport({ scale: 1.0 });
-
-            let displayWidth, displayHeight;
-
-            if (isMobile) {
-                displayWidth = window.innerWidth;
-                displayHeight = (unscaledViewport.height / unscaledViewport.width) * displayWidth;
-            } else {
-                const maxW = window.innerWidth;
-                const maxH = window.innerHeight;
-                const fitScale = Math.min(maxW / unscaledViewport.width, maxH / unscaledViewport.height);
-
-                displayWidth = Math.floor(unscaledViewport.width * fitScale);
-                displayHeight = Math.floor(unscaledViewport.height * fitScale);
-            }
-
-            const wrapper = document.getElementById("wrapper-" + pageNumber);
-            wrapper.style.width = displayWidth + "px";
-            wrapper.style.height = displayHeight + "px";
-
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-
-            const dpr = Math.max(window.devicePixelRatio || 1, 2);
-            const renderScale = (displayWidth / unscaledViewport.width) * dpr;
-            const renderViewport = page.getViewport({ scale: renderScale });
-
-            canvas.width = renderViewport.width;
-            canvas.height = renderViewport.height;
-
-            canvas.style.width = displayWidth + "px";
-            canvas.style.height = displayHeight + "px";
-
-            wrapper.appendChild(canvas);
-
-            await page.render({
-                canvasContext: context,
-                viewport: renderViewport
-            }).promise;
-
-            const annotations = await page.getAnnotations();
-            if (annotations.length > 0) {
-                const layer = document.createElement("div");
-                layer.className = "annotationLayer";
-                wrapper.appendChild(layer);
-
-                annotations.forEach(annotation => {
-                    if (annotation.subtype === 'Link' && annotation.url) {
-                        const link = document.createElement('a');
-                        link.href = annotation.url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-
-                        const rect = unscaledViewport.convertToViewportRectangle(annotation.rect);
-                        const left = Math.min(rect[0], rect[2]);
-                        const top = Math.min(rect[1], rect[3]);
-                        const width = Math.abs(rect[0] - rect[2]);
-                        const height = Math.abs(rect[1] - rect[3]);
-
-                        link.style.left = (left / unscaledViewport.width * 100) + '%';
-                        link.style.top = ((unscaledViewport.height - top) / unscaledViewport.height * 100) + '%';
-                        link.style.width = (width / unscaledViewport.width * 100) + '%';
-                        link.style.height = (height / unscaledViewport.height * 100) + '%';
-
-                        layer.appendChild(link);
-                    }
-                });
-            }
-        }
-
-        async function initPDF() {
-            try {
-                loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
-                totalPages = loadedPdfDocument.numPages;
-                pageCounter.textContent = `1 / ${totalPages}`;
-
-                container.innerHTML = "";
-                for (let i = 1; i <= totalPages; i++) {
-                    const pageBox = document.createElement("div");
-                    pageBox.className = "page-box";
-                    pageBox.id = "page-box-" + i;
-
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "canvas-wrapper";
-                    wrapper.id = "wrapper-" + i;
-
-                    pageBox.appendChild(wrapper);
-                    container.appendChild(pageBox);
-                }
-
-                await renderSinglePage(1);
-
-                for (let i = 2; i <= totalPages; i++) {
-                    renderSinglePage(i);
-                }
-
-            } catch (err) {
-                console.error("Errore nel caricamento del PDF:", err);
-                dismissIntro();
-            }
-        }
-
-        initPDF();
-
-        function goToNextPage() {
-            if (currentPage < totalPages) {
-                currentPage++;
-                updateNavigation();
-            }
-        }
-
-        function goToPrevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                updateNavigation();
-            }
-        }
-
-        nextBtn.addEventListener("click", goToNextPage);
-        prevBtn.addEventListener("click", goToPrevPage);
-
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowRight" || e.key === " ") {
-                goToNextPage();
-            } else if (e.key === "ArrowLeft") {
-                goToPrevPage();
-            }
-        });
-
-        let isScrolling = false;
-        window.addEventListener("wheel", (e) => {
-            if (isMobile || isScrolling) return;
-
-            if (e.deltaY > 0) {
-                goToNextPage();
-            } else if (e.deltaY < 0) {
-                goToPrevPage();
-            }
-
-            isScrolling = true;
-            setTimeout(() => { isScrolling = false; }, 400);
-        });
-
-        fullscreenBtn.addEventListener("click", () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Errore Fullscreen: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        });
-
-        let resizeTimeout;
-        window.addEventListener("resize", () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(async () => {
-                if (!isMobile && loadedPdfDocument) {
-                    for (let i = 1; i <= totalPages; i++) {
-                        const wrapper = document.getElementById("wrapper-" + i);
-                        if (wrapper) wrapper.innerHTML = "";
-                        await renderSinglePage(i);
-                    }
-                    updateNavigation();
-                }
-            }, 200);
         });
     </script>
 </body>
