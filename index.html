@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Giovanni Menerella - Fotografia & Visual</title>
     <style>
         * {
@@ -17,6 +17,7 @@
             background-color: #000;
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
+            overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
@@ -53,8 +54,8 @@
             position: relative;
             width: 100vw;
             height: 100vh;
+            max-height: 100vh;
             overflow: hidden;
-            will-change: transform, opacity;
         }
 
         /* PAGINA 1: Sfondo Nero + Immagine + Nome */
@@ -124,15 +125,15 @@
 
         .text-block-2 {
             opacity: 0;
-            transform: translateY(40px) translateZ(0);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(50px) scale(0.97) translateZ(0);
+            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
             will-change: opacity, transform;
         }
 
         #page-2.in-view .text-block-2 {
             opacity: 1;
-            transform: translateY(0) translateZ(0);
+            transform: translateY(0) scale(1) translateZ(0);
         }
 
         .text-block-2 h2 {
@@ -232,10 +233,10 @@
                 onVideoEnd();
             });
 
-            // Gestione dello scroll fluida (attiva la seconda pagina quando entra nel viewport)
+            // Gestione dell'animazione fluida della seconda pagina allo scroll
             const observerOptions = {
                 root: null,
-                threshold: 0.3 // Attiva quando almeno il 30% della pagina 2 è visibile
+                threshold: 0.4 // Si attiva quando la pagina 2 è visibile al 40%
             };
 
             const observer = new IntersectionObserver((entries, observer) => {
