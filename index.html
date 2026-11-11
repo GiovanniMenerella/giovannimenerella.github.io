@@ -13,21 +13,21 @@
 
         body, html {
             width: 100%;
-            height: 100%;
-            background-color: #000000;
+            background-color: #000;
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
+            overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
-        /* Container Video Intro */
+        /* Container per il Video (Desktop ingrandito al massimo) */
         #video-container {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
+            width: 100%;
             height: 100vh;
-            z-index: 1000;
+            z-index: 30;
             background-color: #000;
             display: flex;
             align-items: center;
@@ -43,44 +43,60 @@
             object-fit: contain;
         }
 
-        /* PAGINA 1 */
-        #page-1 {
+        /* Sezione Principale (Hero) */
+        #hero-section {
             position: relative;
             width: 100%;
             height: 100vh;
-            background-color: #000000;
+            overflow: hidden;
+        }
+
+        /* Container per il Contenuto (Immagine + Testo) con Parallasse */
+        #main-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
             background-size: cover;
             background-position: center;
-            background-attachment: fixed; /* Parallasse nativo ultranitido per Desktop */
+            opacity: 0;
+            transform: translateY(30px);
+            filter: blur(15px);
+            transition: opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s ease-out;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
             padding-bottom: 60px;
-            opacity: 0;
-            filter: blur(15px);
-            transition: opacity 1.2s ease-out, filter 1.2s ease-out;
+            will-change: transform, background-position;
         }
 
-        #page-1.show {
+        /* Stato attivo per l'immagine */
+        #main-container.show {
             opacity: 1;
+            transform: translateY(0);
             filter: blur(0px);
         }
 
-        .text-block-1 {
+        /* Block Testo */
+        .text-block {
             text-align: center;
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 1s ease-out 0.4s, transform 1s ease-out 0.4s;
+            transition: opacity 1s ease-out 0.6s, transform 1s ease-out 0.6s;
             z-index: 2;
+            will-change: transform;
         }
 
-        #page-1.show .text-block-1 {
+        /* Stato attivo per il testo */
+        #main-container.show .text-block {
             opacity: 1;
             transform: translateY(0);
         }
 
-        .text-block-1 h1 {
+        /* Titolo principale */
+        .text-block h1 {
             font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: 4px;
@@ -88,7 +104,8 @@
             margin-bottom: 12px;
         }
 
-        .text-block-1 p {
+        /* Sottotitolo */
+        .text-block p {
             font-size: 1.15rem;
             font-weight: 300;
             letter-spacing: 7px;
@@ -96,43 +113,45 @@
             color: #d1d1d1;
         }
 
-        /* PAGINA 2 (Scorre sopra la pagina 1 come una scheda elegante) */
-        #page-2 {
+        /* Seconda Sezione (A sfondo bianco, stile Apple) */
+        #second-section {
             position: relative;
-            z-index: 10;
             width: 100%;
-            min-height: 100vh;
+            height: 100vh;
             background-color: #ffffff;
             color: #111111;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             text-align: center;
-            box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.8); /* Ombra stile scheda Apple */
+            z-index: 10;
+            box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
         }
 
-        .text-block-2 {
+        .second-content {
             opacity: 0;
             transform: translateY(40px);
-            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: opacity 1s ease-out, transform 1s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        #page-2.in-view .text-block-2 {
+        .second-content.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        .text-block-2 h2 {
-            font-size: 1.6rem;
-            font-weight: 500;
-            letter-spacing: 5px;
+        .second-content h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 4px;
             line-height: 1.8;
             text-transform: uppercase;
-            color: #1a1a1a;
         }
 
-        /* Responsive Mobile */
+        /* Adattamenti per Mobile */
         @media (max-width: 768px) {
+            #video-container {
+                display: flex;
+            }
             video {
                 width: 100%;
                 height: 100%;
@@ -140,22 +159,22 @@
                 max-height: none;
                 object-fit: cover;
             }
-            #page-1 {
-                background-attachment: scroll; /* Su mobile l'attachment fixed causa bug grafici, usiamo lo scroll pulito */
+            #main-container {
                 padding-bottom: 50px;
             }
-            .text-block-1 h1 {
+            .text-block h1 {
                 font-size: 1.4rem;
                 letter-spacing: 3px;
                 margin-bottom: 8px;
             }
-            .text-block-1 p {
+            .text-block p {
                 font-size: 0.92rem;
                 letter-spacing: 5px;
             }
-            .text-block-2 h2 {
-                font-size: 1.15rem;
-                letter-spacing: 3px;
+            .second-content h2 {
+                font-size: 1.25rem;
+                letter-spacing: 2.5px;
+                line-height: 1.7;
                 padding: 0 20px;
             }
         }
@@ -163,7 +182,7 @@
 </head>
 <body>
 
-    <!-- Video Intro -->
+    <!-- Container Video -->
     <div id="video-container">
         <video id="intro-video" autoplay muted playsinline>
             <source src="firma.mp4" type="video/mp4">
@@ -171,22 +190,20 @@
         </video>
     </div>
 
-    <!-- Pagina 1 -->
-    <section id="page-1">
-        <div class="text-block-1">
-            <h1>GIOVANNI MENERELLA</h1>
-            <p>FOTOGRAFIA &amp; VISUAL</p>
+    <!-- Sezione 1: Hero con Immagine di Sfondo e Testi -->
+    <section id="hero-section">
+        <div id="main-container">
+            <div class="text-block">
+                <h1>GIOVANNI MENERELLA</h1>
+                <p>FOTOGRAFIA &amp; VISUAL</p>
+            </div>
         </div>
     </section>
 
-    <!-- Pagina 2 -->
-    <section id="page-2">
-        <div class="text-block-2">
-            <h2>
-                GUIDO L'IMMAGINE<br>
-                DALLO SCATTO REALE<br>
-                ALLA SUA FORMA FINALE
-            </h2>
+    <!-- Sezione 2: Seconda pagina a sfondo bianco -->
+    <section id="second-section">
+        <div class="second-content">
+            <h2>GUIDO L'IMMAGINE<br>DALLO SCATTO REALE<br>ALLA SUA FORMA FINALE</h2>
         </div>
     </section>
 
@@ -194,38 +211,55 @@
         document.addEventListener("DOMContentLoaded", function() {
             const videoContainer = document.getElementById("video-container");
             const video = document.getElementById("intro-video");
-            const page1 = document.getElementById("page-1");
-            const page2 = document.getElementById("page-2");
+            const mainContainer = document.getElementById("main-container");
+            const textBlock = mainContainer.querySelector(".text-block");
+            const secondContent = document.querySelector(".second-content");
 
+            // Riconoscimento del dispositivo e impostazione dell'immagine di sfondo
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
-            page1.style.backgroundImage = `url('${bgImage}')`;
+            
+            // Precaricamento dell'immagine di sfondo
+            mainContainer.style.backgroundImage = `url('${bgImage}')`;
 
+            // Funzione eseguita alla fine del video
             function onVideoEnd() {
+                // Sfumatura in uscita del video
                 videoContainer.style.opacity = '0';
+                
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
-                    page1.classList.add('show');
+                    // Attivazione animazione immagine + testo iniziale
+                    mainContainer.classList.add('show');
                 }, 800);
             }
 
+            // Evento di fine video
             video.addEventListener("ended", onVideoEnd);
+
+            // Fallback nel caso in cui l'autoplay venga bloccato o ci siano problemi di riproduzione
             video.play().catch(error => {
+                console.log("Autoplay non consentito o errore video:", error);
                 onVideoEnd();
             });
 
-            // Animazione di comparsa pulita per la seconda pagina
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        page2.classList.add('in-view');
-                    }
-                });
-            }, {
-                threshold: 0.25
-            });
+            // Effetto Parallasse in stile Apple allo scroll
+            window.addEventListener("scroll", function() {
+                const scrollY = window.scrollY;
+                const windowHeight = window.innerHeight;
 
-            observer.observe(page2);
+                if (scrollY <= windowHeight) {
+                    // Sposta l'immagine e il testo a velocità differenti per creare profondità (parallasse)
+                    mainContainer.style.transform = `translateY(${scrollY * 0.4}px)`;
+                    textBlock.style.transform = `translateY(${scrollY * 0.2}px)`;
+                }
+
+                // Attivazione dell'animazione a dissolvenza per la seconda sezione quando entra in vista
+                const secondSectionTop = document.getElementById("second-section").getBoundingClientRect().top;
+                if (secondSectionTop < windowHeight * 0.75) {
+                    secondContent.classList.add("visible");
+                }
+            });
         });
     </script>
 </body>
