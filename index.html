@@ -14,20 +14,21 @@
         body, html {
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow-x: hidden;
             background-color: #000;
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
+            scroll-behavior: smooth;
         }
 
-        /* Container per il Video (Desktop ingrandito al massimo) */
+        /* Container per il Video (Intro) */
         #video-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 10;
+            z-index: 100;
             background-color: #000;
             display: flex;
             align-items: center;
@@ -43,33 +44,39 @@
             object-fit: contain;
         }
 
-        /* Container per il Contenuto (Immagine + Testo) */
-        #main-container {
+        /* Sezioni del sito (Scorrimento verticale a pagine) */
+        section {
             position: relative;
             width: 100%;
             height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* PAGINA 1: Sfondo Nero + Immagine + Nome */
+        #page-1 {
+            background-color: #000;
             background-size: cover;
             background-position: center;
-            opacity: 0;
-            transform: translateY(30px);
-            filter: blur(15px);
-            transition: opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s ease-out;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
             padding-bottom: 60px;
+            opacity: 0;
+            transform: translateY(30px);
+            filter: blur(15px);
+            transition: opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s ease-out;
         }
 
-        /* Stato attivo per l'immagine */
-        #main-container.show {
+        #page-1.show {
             opacity: 1;
             transform: translateY(0);
             filter: blur(0px);
         }
 
-        /* Block Testo */
-        .text-block {
+        /* Block Testo Pagina 1 */
+        .text-block-1 {
             text-align: center;
             opacity: 0;
             transform: translateY(20px);
@@ -77,14 +84,12 @@
             z-index: 2;
         }
 
-        /* Stato attivo per il testo */
-        #main-container.show .text-block {
+        #page-1.show .text-block-1 {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* Titolo principale */
-        .text-block h1 {
+        .text-block-1 h1 {
             font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: 4px;
@@ -92,8 +97,7 @@
             margin-bottom: 12px;
         }
 
-        /* Sottotitolo */
-        .text-block p {
+        .text-block-1 p {
             font-size: 1.15rem;
             font-weight: 300;
             letter-spacing: 7px;
@@ -101,10 +105,40 @@
             color: #d1d1d1;
         }
 
+        /* PAGINA 2: Sfondo Bianco + Frase Centrale */
+        #page-2 {
+            background-color: #ffffff;
+            color: #111111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .text-block-2 {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #page-2.in-view .text-block-2 {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .text-block-2 h2 {
+            font-size: 1.6rem;
+            font-weight: 500;
+            letter-spacing: 5px;
+            line-height: 1.8;
+            text-transform: uppercase;
+            color: #1a1a1a;
+        }
+
         /* Adattamenti per Mobile */
         @media (max-width: 768px) {
             #video-container {
-                display: block;
+                display: flex;
             }
             video {
                 width: 100%;
@@ -113,24 +147,29 @@
                 max-height: none;
                 object-fit: cover;
             }
-            #main-container {
+            #page-1 {
                 padding-bottom: 50px;
             }
-            .text-block h1 {
+            .text-block-1 h1 {
                 font-size: 1.4rem;
                 letter-spacing: 3px;
                 margin-bottom: 8px;
             }
-            .text-block p {
+            .text-block-1 p {
                 font-size: 0.92rem;
                 letter-spacing: 5px;
+            }
+            .text-block-2 h2 {
+                font-size: 1.15rem;
+                letter-spacing: 3px;
+                padding: 0 20px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- Container Video -->
+    <!-- Container Video Intro -->
     <div id="video-container">
         <video id="intro-video" autoplay muted playsinline>
             <source src="firma.mp4" type="video/mp4">
@@ -138,46 +177,72 @@
         </video>
     </div>
 
-    <!-- Container Immagine di Sfondo e Testi -->
-    <div id="main-container">
-        <div class="text-block">
+    <!-- PAGINA 1 -->
+    <section id="page-1">
+        <div class="text-block-1">
             <h1>GIOVANNI MENERELLA</h1>
             <p>FOTOGRAFIA &amp; VISUAL</p>
         </div>
-    </div>
+    </section>
+
+    <!-- PAGINA 2 -->
+    <section id="page-2">
+        <div class="text-block-2">
+            <h2>
+                GUIDO L'IMMAGINE<br>
+                DALLO SCATTO REALE<br>
+                ALLA SUA FORMA FINALE
+            </h2>
+        </div>
+    </section>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const videoContainer = document.getElementById("video-container");
             const video = document.getElementById("intro-video");
-            const mainContainer = document.getElementById("main-container");
+            const page1 = document.getElementById("page-1");
+            const page2 = document.getElementById("page-2");
 
-            // Riconoscimento del dispositivo e impostazione dell'immagine di sfondo
+            // Riconoscimento dispositivo e impostazione immagine di sfondo corretta
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
-            
-            // Precaricamento dell'immagine di sfondo
-            mainContainer.style.backgroundImage = `url('${bgImage}')`;
+            page1.style.backgroundImage = `url('${bgImage}')`;
 
-            // Funzione eseguita alla fine del video
+            // Fine del video iniziale
             function onVideoEnd() {
-                // Sfumatura in uscita del video
                 videoContainer.style.opacity = '0';
-                
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
-                    // Attivazione animazione immagine + testo
-                    mainContainer.classList.add('show');
+                    page1.classList.add('show');
+                    // Riabilita lo scorrimento della pagina dopo l'intro
+                    document.body.style.overflowY = 'auto';
                 }, 800);
             }
 
-            // Evento di fine video
-            video.addEventListener("ended", onVideoEnd);
+            // Blocca lo scroll finché c'è il video
+            document.body.style.overflowY = 'hidden';
 
-            // Fallback nel caso in cui l'autoplay venga bloccato o ci siano problemi di riproduzione
+            video.addEventListener("ended", onVideoEnd);
             video.play().catch(error => {
                 console.log("Autoplay non consentito o errore video:", error);
                 onVideoEnd();
+            });
+
+            // Effetto Parallax ed Entrata della Pagina 2 allo scroll
+            window.addEventListener("scroll", function() {
+                let scrollY = window.scrollY;
+                
+                // Effetto parallax differenziato sulla prima pagina
+                if (page1.classList.contains('show')) {
+                    page1.style.transform = `translateY(${scrollY * 0.35}px)`;
+                    page1.style.opacity = `${1 - (scrollY / window.innerHeight) * 1.2}`;
+                }
+
+                // Controllo attivazione animazione pagina 2
+                let rect = page2.getBoundingClientRect();
+                if (rect.top <= window.innerHeight * 0.7) {
+                    page2.classList.add('in-view');
+                }
             });
         });
     </script>
