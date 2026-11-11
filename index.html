@@ -20,7 +20,7 @@
             scroll-behavior: smooth;
         }
 
-        /* Container per il Video (Desktop ingrandito al massimo) */
+        /* Container per il Video */
         #video-container {
             position: fixed;
             top: 0;
@@ -49,9 +49,11 @@
             width: 100%;
             height: 100vh;
             overflow: hidden;
+            background-color: #000;
+            z-index: 2;
         }
 
-        /* Container per il Contenuto (Immagine + Testo) con Parallasse */
+        /* Container per il Contenuto (Immagine + Testo) con Parallasse accelerato */
         #main-container {
             position: absolute;
             top: 0;
@@ -61,7 +63,7 @@
             background-size: cover;
             background-position: center;
             opacity: 0;
-            transform: translateY(30px);
+            transform: translate3d(0, 30px, 0);
             filter: blur(15px);
             transition: opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), filter 1.2s ease-out;
             display: flex;
@@ -69,33 +71,29 @@
             justify-content: flex-end;
             align-items: center;
             padding-bottom: 60px;
-            will-change: transform, background-position;
+            will-change: transform;
         }
 
-        /* Stato attivo per l'immagine */
         #main-container.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
             filter: blur(0px);
         }
 
-        /* Block Testo */
         .text-block {
             text-align: center;
             opacity: 0;
-            transform: translateY(20px);
+            transform: translate3d(0, 20px, 0);
             transition: opacity 1s ease-out 0.6s, transform 1s ease-out 0.6s;
             z-index: 2;
             will-change: transform;
         }
 
-        /* Stato attivo per il testo */
         #main-container.show .text-block {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
         }
 
-        /* Titolo principale */
         .text-block h1 {
             font-size: 1.8rem;
             font-weight: 700;
@@ -104,7 +102,6 @@
             margin-bottom: 12px;
         }
 
-        /* Sottotitolo */
         .text-block p {
             font-size: 1.15rem;
             font-weight: 300;
@@ -113,7 +110,7 @@
             color: #d1d1d1;
         }
 
-        /* Seconda Sezione (A sfondo bianco, stile Apple) */
+        /* Seconda Sezione a sfondo bianco */
         #second-section {
             position: relative;
             width: 100%;
@@ -126,17 +123,24 @@
             text-align: center;
             z-index: 10;
             box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
+            /* Nascosto inizialmente per evitare sfarfallii in caricamento/video */
+            visibility: hidden; 
+        }
+
+        #second-section.active {
+            visibility: visible;
         }
 
         .second-content {
             opacity: 0;
-            transform: translateY(40px);
+            transform: translate3d(0, 40px, 0);
             transition: opacity 1s ease-out, transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: opacity, transform;
         }
 
         .second-content.visible {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
         }
 
         .second-content h2 {
@@ -190,7 +194,7 @@
         </video>
     </div>
 
-    <!-- Sezione 1: Hero con Immagine di Sfondo e Testi -->
+    <!-- Sezione 1: Hero -->
     <section id="hero-section">
         <div id="main-container">
             <div class="text-block">
@@ -200,7 +204,7 @@
         </div>
     </section>
 
-    <!-- Sezione 2: Seconda pagina a sfondo bianco -->
+    <!-- Sezione 2: Sfondo bianco -->
     <section id="second-section">
         <div class="second-content">
             <h2>GUIDO L'IMMAGINE<br>DALLO SCATTO REALE<br>ALLA SUA FORMA FINALE</h2>
@@ -213,51 +217,54 @@
             const video = document.getElementById("intro-video");
             const mainContainer = document.getElementById("main-container");
             const textBlock = mainContainer.querySelector(".text-block");
+            const secondSection = document.getElementById("second-section");
             const secondContent = document.querySelector(".second-content");
 
-            // Riconoscimento del dispositivo e impostazione dell'immagine di sfondo
+            // Riconoscimento dispositivo e caricamento immagine corretta
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
-            
-            // Precaricamento dell'immagine di sfondo
             mainContainer.style.backgroundImage = `url('${bgImage}')`;
 
-            // Funzione eseguita alla fine del video
             function onVideoEnd() {
-                // Sfumatura in uscita del video
                 videoContainer.style.opacity = '0';
-                
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
-                    // Attivazione animazione immagine + testo iniziale
                     mainContainer.classList.add('show');
+                    secondSection.classList.add('active'); // Rende visibile la sezione bianca solo a video terminato
                 }, 800);
             }
 
-            // Evento di fine video
             video.addEventListener("ended", onVideoEnd);
 
-            // Fallback nel caso in cui l'autoplay venga bloccato o ci siano problemi di riproduzione
             video.play().catch(error => {
                 console.log("Autoplay non consentito o errore video:", error);
                 onVideoEnd();
             });
 
-            // Effetto Parallasse in stile Apple allo scroll
+            // Gestione ottimizzata del parallasse con requestAnimationFrame per eliminare gli scatti
+            let ticking = false;
+
             window.addEventListener("scroll", function() {
-                const scrollY = window.scrollY;
-                const windowHeight = window.innerHeight;
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        const scrollY = window.scrollY;
+                        const windowHeight = window.innerHeight;
 
-                if (scrollY <= windowHeight) {
-                    // Sposta l'immagine e il testo a velocità differenti per creare profondità (parallasse)
-                    mainContainer.style.transform = `translateY(${scrollY * 0.4}px)`;
-                    textBlock.style.transform = `translateY(${scrollY * 0.2}px)`;
-                }
+                        if (scrollY <= windowHeight) {
+                            // Uso di translate3d per forzare l'accelerazione hardware GPU
+                            mainContainer.style.transform = `translate3d(0, ${scrollY * 0.4}px, 0)`;
+                            textBlock.style.transform = `translate3d(0, ${scrollY * 0.2}px, 0)`;
+                        }
 
-                // Attivazione dell'animazione a dissolvenza per la seconda sezione quando entra in vista
-                const secondSectionTop = document.getElementById("second-section").getBoundingClientRect().top;
-                if (secondSectionTop < windowHeight * 0.75) {
-                    secondContent.classList.add("visible");
+                        // Attivazione dissolvenza seconda sezione
+                        const secondSectionTop = secondSection.getBoundingClientRect().top;
+                        if (secondSectionTop < windowHeight * 0.75) {
+                            secondContent.classList.add("visible");
+                        }
+
+                        ticking = false;
+                    });
+                    ticking = true;
                 }
             });
         });
