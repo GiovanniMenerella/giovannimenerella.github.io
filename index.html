@@ -11,26 +11,19 @@
             box-sizing: border-box;
         }
 
-        /* Gestione Snap Scroll Nativi stile Apple */
-        html {
-            scroll-behavior: smooth;
-            scroll-snap-type: y mandatory;
-            height: 100%;
-            overflow-y: scroll;
-        }
-
-        body {
+        body, html {
             width: 100%;
             height: 100%;
             background-color: #000;
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
-        /* Blocco dello scroll iniziale durante il video */
+        /* Blocco dello scroll iniziale finché c'è il video */
         body.intro-active {
             overflow: hidden;
-            touch-action: none;
         }
 
         /* Container Video Intro */
@@ -56,14 +49,12 @@
             object-fit: contain;
         }
 
-        /* Sezioni full-screen con aggancio preciso */
+        /* Sezioni full-screen */
         section {
             position: relative;
             width: 100vw;
             height: 100vh;
-            height: 100dvh; /* Garanzia anti-striscia bianca su browser mobile */
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
+            height: 100dvh;
             overflow: hidden;
         }
 
@@ -78,31 +69,33 @@
             align-items: center;
             padding-bottom: 60px;
             opacity: 0;
-            transform: scale(1.04);
+            transform: translateY(30px) translateZ(0);
             filter: blur(15px);
             transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
                         transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
                         filter 1.2s ease;
+            will-change: transform, opacity;
         }
 
         #page-1.show {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0) translateZ(0);
             filter: blur(0px);
         }
 
         .text-block-1 {
             text-align: center;
             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s, 
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+            transform: translateY(20px) translateZ(0);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s, 
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
             z-index: 2;
+            will-change: transform, opacity;
         }
 
         #page-1.show .text-block-1 {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) translateZ(0);
         }
 
         .text-block-1 h1 {
@@ -131,11 +124,10 @@
             text-align: center;
         }
 
-        /* Animazione entrata stile Apple al passaggio */
         .text-block-2 {
             opacity: 0;
-            transform: translateY(60px) scale(0.95);
-            filter: blur(10px);
+            transform: translateY(50px) scale(0.96) translateZ(0);
+            filter: blur(8px);
             transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
                         transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
                         filter 1.2s ease;
@@ -144,7 +136,7 @@
 
         #page-2.in-view .text-block-2 {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0) scale(1) translateZ(0);
             filter: blur(0px);
         }
 
@@ -157,7 +149,7 @@
             color: #1a1a1a;
         }
 
-        /* Responsiveness Mobile */
+        /* Responsive Mobile */
         @media (max-width: 768px) {
             video {
                 width: 100%;
@@ -192,6 +184,7 @@
     <div id="video-container">
         <video id="intro-video" autoplay muted playsinline>
             <source src="firma.mp4" type="video/mp4">
+            Il tuo browser non supporta i video HTML5.
         </video>
     </div>
 
@@ -220,6 +213,7 @@
             const video = document.getElementById("intro-video");
             const page1 = document.getElementById("page-1");
             const page2 = document.getElementById("page-2");
+            const textBlock1 = document.querySelector(".text-block-1");
 
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
@@ -239,7 +233,26 @@
                 onVideoEnd();
             });
 
-            // Observer avanzato per azionare l'animazione di Pagina 2 ogni volta che si entra o si ri-entra
+            // Effetto Parallax avanzato con requestAnimationFrame (fluido e senza tremolii)
+            let ticking = false;
+            window.addEventListener("scroll", function() {
+                let scrollY = window.scrollY;
+
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        if (page1.classList.contains('show') && scrollY <= window.innerHeight) {
+                            // Velocità differenziata: lo sfondo e il testo si muovono a velocità scalari differenti
+                            page1.style.transform = `translate3d(0, ${scrollY * 0.25}px, 0)`;
+                            textBlock1.style.transform = `translate3d(0, ${scrollY * 0.5}px, 0)`;
+                            page1.style.opacity = `${1 - (scrollY / window.innerHeight) * 1.15}`;
+                        }
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+
+            // Observer per l'entrata in scena pulita della pagina 2
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -249,7 +262,7 @@
                     }
                 });
             }, {
-                threshold: 0.35
+                threshold: 0.3
             });
 
             observer.observe(page2);
