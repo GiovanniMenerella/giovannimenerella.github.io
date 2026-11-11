@@ -18,11 +18,16 @@
             font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
             color: #ffffff;
             overflow-x: hidden;
-            scroll-behavior: smooth;
+        }
+
+        /* Altezza totale del documento per consentire lo scroll fluido tra le 2 pagine */
+        body {
+            height: 200vh;
         }
 
         /* Blocco dello scroll iniziale finché c'è il video */
         body.intro-active {
+            height: 100% !important;
             overflow: hidden;
         }
 
@@ -49,17 +54,14 @@
             object-fit: contain;
         }
 
-        /* Sezioni full-screen */
-        section {
-            position: relative;
+        /* PAGINA 1: Fissa in primo piano con effetto Parallax e sfocatura iniziale */
+        #page-1 {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
             height: 100dvh;
-            overflow: hidden;
-        }
-
-        /* PAGINA 1 */
-        #page-1 {
             background-color: #000;
             background-size: cover;
             background-position: center;
@@ -68,25 +70,27 @@
             justify-content: flex-end;
             align-items: center;
             padding-bottom: 60px;
+            z-index: 1;
             opacity: 0;
-            transform: translateY(30px) translateZ(0);
+            transform: scale(1.04) translateZ(0);
             filter: blur(15px);
             transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
                         transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
                         filter 1.2s ease;
-            will-change: transform, opacity;
+            will-change: transform, opacity, filter;
         }
 
         #page-1.show {
             opacity: 1;
-            transform: translateY(0) translateZ(0);
+            transform: scale(1) translateZ(0);
             filter: blur(0px);
         }
 
+        /* Testo Pagina 1 */
         .text-block-1 {
             text-align: center;
             opacity: 0;
-            transform: translateY(20px) translateZ(0);
+            transform: translateY(30px) translateZ(0);
             transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s, 
                         transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
             z-index: 2;
@@ -114,30 +118,36 @@
             color: #d1d1d1;
         }
 
-        /* PAGINA 2 */
+        /* PAGINA 2: Scorre sopra alla pagina 1 come una tenda elegante */
         #page-2 {
+            position: absolute;
+            top: 100vh;
+            top: 100dvh;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             background-color: #ffffff;
             color: #111111;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
+            z-index: 2;
+            box-shadow: 0 -30px 50px rgba(0, 0, 0, 0.4);
         }
 
         .text-block-2 {
             opacity: 0;
-            transform: translateY(50px) scale(0.96) translateZ(0);
-            filter: blur(8px);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-                        filter 1.2s ease;
-            will-change: transform, opacity, filter;
+            transform: translateY(40px) scale(0.96) translateZ(0);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
         }
 
         #page-2.in-view .text-block-2 {
             opacity: 1;
             transform: translateY(0) scale(1) translateZ(0);
-            filter: blur(0px);
         }
 
         .text-block-2 h2 {
@@ -215,6 +225,7 @@
             const page2 = document.getElementById("page-2");
             const textBlock1 = document.querySelector(".text-block-1");
 
+            // Riconoscimento dispositivo e impostazione immagine corretta
             const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
             page1.style.backgroundImage = `url('${bgImage}')`;
@@ -233,39 +244,35 @@
                 onVideoEnd();
             });
 
-            // Effetto Parallax avanzato con requestAnimationFrame (fluido e senza tremolii)
+            // Effetto Parallasse fluido con velocità differenziata via GPU (requestAnimationFrame)
             let ticking = false;
             window.addEventListener("scroll", function() {
                 let scrollY = window.scrollY;
+                let maxH = window.innerHeight;
 
                 if (!ticking) {
                     window.requestAnimationFrame(function() {
-                        if (page1.classList.contains('show') && scrollY <= window.innerHeight) {
-                            // Velocità differenziata: lo sfondo e il testo si muovono a velocità scalari differenti
-                            page1.style.transform = `translate3d(0, ${scrollY * 0.25}px, 0)`;
-                            textBlock1.style.transform = `translate3d(0, ${scrollY * 0.5}px, 0)`;
-                            page1.style.opacity = `${1 - (scrollY / window.innerHeight) * 1.15}`;
+                        if (scrollY <= maxH) {
+                            let progress = scrollY / maxH;
+                            
+                            // Velocità sfasate: lo sfondo si muove più lentamente e il testo scorre più velocemente verso l'alto
+                            page1.style.transform = `translate3d(0, ${-scrollY * 0.35}px, 0)`;
+                            textBlock1.style.transform = `translate3d(0, ${-scrollY * 0.65}px, 0)`;
+                            page1.style.opacity = `${1 - progress * 1.15}`;
                         }
+
+                        // Attivazione dell'animazione della pagina 2 quando sale sullo schermo
+                        if (scrollY > maxH * 0.3) {
+                            page2.classList.add('in-view');
+                        } else {
+                            page2.classList.remove('in-view');
+                        }
+
                         ticking = false;
                     });
                     ticking = true;
                 }
             });
-
-            // Observer per l'entrata in scena pulita della pagina 2
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        page2.classList.add('in-view');
-                    } else {
-                        page2.classList.remove('in-view');
-                    }
-                });
-            }, {
-                threshold: 0.3
-            });
-
-            observer.observe(page2);
         });
     </script>
 </body>
