@@ -43,7 +43,7 @@
             object-fit: contain;
         }
 
-        /* Sezione Principale (Hero) */
+        /* Sezione Principale (Hero) - Sfondo nero bloccato per evitare trasparenze */
         #hero-section {
             position: relative;
             width: 100%;
@@ -60,6 +60,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
+            background-color: #000;
             background-size: cover;
             background-position: center;
             opacity: 0;
@@ -123,7 +124,6 @@
             text-align: center;
             z-index: 10;
             box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
-            /* Nascosto inizialmente per evitare sfarfallii in caricamento/video */
             visibility: hidden; 
         }
 
@@ -230,7 +230,7 @@
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
                     mainContainer.classList.add('show');
-                    secondSection.classList.add('active'); // Rende visibile la sezione bianca solo a video terminato
+                    secondSection.classList.add('active');
                 }, 800);
             }
 
@@ -241,7 +241,7 @@
                 onVideoEnd();
             });
 
-            // Gestione ottimizzata del parallasse con requestAnimationFrame per eliminare gli scatti
+            // Gestione ottimizzata del parallasse senza tremolii alla fine
             let ticking = false;
 
             window.addEventListener("scroll", function() {
@@ -251,9 +251,10 @@
                         const windowHeight = window.innerHeight;
 
                         if (scrollY <= windowHeight) {
-                            // Uso di translate3d per forzare l'accelerazione hardware GPU
-                            mainContainer.style.transform = `translate3d(0, ${scrollY * 0.4}px, 0)`;
-                            textBlock.style.transform = `translate3d(0, ${scrollY * 0.2}px, 0)`;
+                            // Limita rigidamente i pixel per evitare micro-scatti a fine corsa
+                            const currentScroll = Math.min(scrollY, windowHeight);
+                            mainContainer.style.transform = `translate3d(0, ${currentScroll * 0.4}px, 0)`;
+                            textBlock.style.transform = `translate3d(0, ${currentScroll * 0.2}px, 0)`;
                         }
 
                         // Attivazione dissolvenza seconda sezione
@@ -266,7 +267,7 @@
                     });
                     ticking = true;
                 }
-            });
+            }, { passive: true });
         });
     </script>
 </body>
