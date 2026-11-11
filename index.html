@@ -43,24 +43,23 @@
             object-fit: contain;
         }
 
-        /* Sezione Principale (Hero) - Sfondo nero bloccato per evitare trasparenze */
+        /* Sezione Principale (Hero) */
         #hero-section {
             position: relative;
             width: 100%;
             height: 100vh;
             overflow: hidden;
             background-color: #000;
-            z-index: 2;
+            z-index: 5; /* Sta sopra alla seconda sezione coprendola totalmente */
         }
 
-        /* Container per il Contenuto (Immagine + Testo) con Parallasse accelerato */
+        /* Container per il Contenuto (Immagine + Testo) */
         #main-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            background-color: #000;
             background-size: cover;
             background-position: center;
             opacity: 0;
@@ -111,7 +110,7 @@
             color: #d1d1d1;
         }
 
-        /* Seconda Sezione a sfondo bianco */
+        /* Seconda Sezione a sfondo bianco (posizionata sotto la hero) */
         #second-section {
             position: relative;
             width: 100%;
@@ -122,13 +121,8 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            z-index: 10;
+            z-index: 1; /* Sotto la hero-section */
             box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
-            visibility: hidden; 
-        }
-
-        #second-section.active {
-            visibility: visible;
         }
 
         .second-content {
@@ -230,7 +224,6 @@
                 setTimeout(() => {
                     videoContainer.style.display = 'none';
                     mainContainer.classList.add('show');
-                    secondSection.classList.add('active');
                 }, 800);
             }
 
@@ -251,7 +244,6 @@
                         const windowHeight = window.innerHeight;
 
                         if (scrollY <= windowHeight) {
-                            // Limita rigidamente i pixel per evitare micro-scatti a fine corsa
                             const currentScroll = Math.min(scrollY, windowHeight);
                             mainContainer.style.transform = `translate3d(0, ${currentScroll * 0.4}px, 0)`;
                             textBlock.style.transform = `translate3d(0, ${currentScroll * 0.2}px, 0)`;
