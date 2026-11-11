@@ -49,7 +49,7 @@
             object-fit: contain;
         }
 
-        /* SLIDER CONTAINER DESKTOP */
+        /* SLIDER CONTAINER */
         #pdf-container {
             display: flex;
             width: 100vw;
@@ -69,8 +69,8 @@
             justify-content: center;
         }
 
-        /* ANIMAZIONE SCROLL + ZOOM PRIMA PAGINA */
-        .page-box:first-child .canvas-wrapper {
+        /* ANIMAZIONE SCROLL + ZOOM PRIMA PAGINA (FOTO NERA) */
+        .page-box:first-child .animate-target {
             opacity: 0;
             transform: translateY(140px) scale(1.12);
             filter: blur(8px);
@@ -79,19 +79,27 @@
                         filter 1.2s ease;
         }
 
-        .page-box:first-child.animate-in .canvas-wrapper {
+        .page-box:first-child.animate-in .animate-target {
             opacity: 1;
             transform: translateY(0) scale(1);
             filter: blur(0);
         }
 
-        .canvas-wrapper {
+        .canvas-wrapper, .img-wrapper {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
             border-radius: 4px;
+        }
+
+        .img-wrapper img {
+            display: block;
+            border-radius: 4px;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
         }
 
         canvas {
@@ -114,7 +122,7 @@
             cursor: pointer;
         }
 
-        /* CONTROLLI UI DELICATI E SEMITRASPARENTI */
+        /* CONTROLLI UI */
         .ui-btn {
             position: fixed;
             background: rgba(0, 0, 0, 0.35);
@@ -209,12 +217,12 @@
                 margin-bottom: 10px;
             }
 
-            .canvas-wrapper {
+            .canvas-wrapper, .img-wrapper {
                 width: 100% !important;
                 height: auto !important;
             }
 
-            canvas {
+            canvas, .img-wrapper img {
                 width: 100% !important;
                 height: auto !important;
             }
@@ -279,7 +287,7 @@
 
             const firstBox = document.getElementById("page-box-1");
             setTimeout(() => {
-                if (firstBox) firstBox.classList.add("animate-in");
+                if (firstBox) firstBox.classList.0 ? firstBox.classList.add("animate-in") : firstBox.classList.add("animate-in");
             }, 100);
 
             setTimeout(() => {
@@ -287,19 +295,14 @@
             }, 800);
         }
 
-        // Sincronizzazione con il video
         if (introVideo) {
             introVideo.addEventListener("ended", dismissIntro);
             introVideo.addEventListener("error", dismissIntro);
-
-            setTimeout(dismissIntro, 10000); // Fallback di sicurezza di 10 secondi
-
-            introVideo.play().catch(() => {
-                dismissIntro();
-            });
+            setTimeout(dismissIntro, 10000);
+            introVideo.play().catch(() => { dismissIntro(); });
         }
 
-        async function renderSinglePage(pageNumber) {
+        async function renderSinglePage(pageNumber, wrapper) {
             const page = await loadedPdfDocument.getPage(pageNumber);
             const unscaledViewport = page.getViewport({ scale: 1.0 });
 
@@ -317,7 +320,6 @@
                 displayHeight = Math.floor(unscaledViewport.height * fitScale);
             }
 
-            const wrapper = document.getElementById("wrapper-" + pageNumber);
             wrapper.style.width = displayWidth + "px";
             wrapper.style.height = displayHeight + "px";
 
@@ -330,7 +332,6 @@
 
             canvas.width = renderViewport.width;
             canvas.height = renderViewport.height;
-
             canvas.style.width = displayWidth + "px";
             canvas.style.height = displayHeight + "px";
 
@@ -371,14 +372,34 @@
             }
         }
 
-        async function initPDF() {
+        async function initPortfolio() {
             try {
+                // Carica il documento PDF (che adesso conterrà le pagine dalla 3 in poi, oppure gestisci il numero di pagine)
                 loadedPdfDocument = await pdfjsLib.getDocument(pdfUrl).promise;
-                totalPages = loadedPdfDocument.numPages;
+                
+                // Totale pagine = 1 (foto iniziale) + pagine del PDF rimanente
+                totalPages = loadedPdfDocument.numPages + 1;
                 pageCounter.textContent = `1 / ${totalPages}`;
 
                 container.innerHTML = "";
-                for (let i = 1; i <= totalPages; i++) {
+
+                // PAGINA 1: Inseriamo l'immagine vuota "01 desktop.jpg" o "01 mobile.jpg" con l'animazione
+                const pageBox1 = document.createElement("div");
+                pageBox1.className = "page-box";
+                pageBox1.id = "page-box-1";
+
+                const wrapper1 = document.createElement("div");
+                wrapper1.className = "img-wrapper animate-target";
+                
+                const img1 = document.createElement("img");
+                img1.src = isMobile ? "01 mobile.jpg" : "01 desktop.jpg";
+                wrapper1.appendChild(img1);
+                
+                pageBox1.appendChild(wrapper1);
+                container.appendChild(pageBox1);
+
+                // PAGINE SUCCESSIVE DAL PDF
+                for (let i = 2; i <= totalPages; i++) {
                     const pageBox = document.createElement("div");
                     pageBox.className = "page-box";
                     pageBox.id = "page-box-" + i;
@@ -391,19 +412,21 @@
                     container.appendChild(pageBox);
                 }
 
-                await renderSinglePage(1);
+                // Renderizza la prima pagina PDF effettiva (corrispondente alla pagina 2 del portfolio)
+                renderSinglePage(1, document.getElementById("wrapper-2"));
 
-                for (let i = 2; i <= totalPages; i++) {
-                    renderSinglePage(i);
+                // Renderizza le altre pagine in background
+                for (let i = 2; i <= loadedPdfDocument.numPages; i++) {
+                    renderSinglePage(i, document.getElementById("wrapper-" + (i + 1)));
                 }
 
             } catch (err) {
-                console.error("Errore nel caricamento del PDF:", err);
+                console.error("Errore nel caricamento:", err);
                 dismissIntro();
             }
         }
 
-        initPDF();
+        initPortfolio();
 
         function goToNextPage() {
             if (currentPage < totalPages) {
@@ -454,21 +477,6 @@
                     document.exitFullscreen();
                 }
             }
-        });
-
-        let resizeTimeout;
-        window.addEventListener("resize", () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(async () => {
-                if (!isMobile && loadedPdfDocument) {
-                    for (let i = 1; i <= totalPages; i++) {
-                        const wrapper = document.getElementById("wrapper-" + i);
-                        if (wrapper) wrapper.innerHTML = "";
-                        await renderSinglePage(i);
-                    }
-                    updateNavigation();
-                }
-            }, 200);
         });
     </script>
 </body>
