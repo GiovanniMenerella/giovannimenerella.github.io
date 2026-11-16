@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giovanni Menerella - Fotografia &amp; Visual</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            width: 100%;
+            background: #000;
+            scroll-behavior: smooth;
+        }
+        body {
+            width: 100%;
+            overflow-x: clip;
+            background: #000;
+            color: #fff;
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+        }
+        /* Impedisce di scorrere fino alla pagina bianca durante l'intro. */
+        body.intro-playing { overflow: hidden; }
+
+        /* Video introduttivo: copre interamente il viewport. */
+        #video-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+        #intro-video {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /*
+         * L'hero è leggermente più alto del viewport: questo margine nero
+         * evita che una riga bianca affiori in basso per gli arrotondamenti
+         * dei pixel o le variazioni delle barre del browser.
+         */
+        #hero-section {
+            position: relative;
+            isolation: isolate;
+            width: 100%;
+            height: calc(100vh + 12px);
+            height: calc(100dvh + 12px);
+            overflow: hidden;
+            background: #000;
+        }
+        #main-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 20px 60px;
+            opacity: 0;
+            transition: opacity 1.2s ease-out;
+            /* Nessuna trasformazione/filtro sull'immagine: evita tremolii GPU. */
+        }
+        #main-container.show { opacity: 1; }
+
+        .text-block {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease-out 0.35s,
+                        transform 1s ease-out 0.35s;
+        }
+        #main-container.show .text-block {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .text-block h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .text-block p {
+            font-size: 1.15rem;
+            font-weight: 300;
+            letter-spacing: 7px;
+            text-transform: uppercase;
+            color: #d1d1d1;
+        }
+
+        #second-section {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #fff;
+            color: #111;
+            text-align: center;
+            /* Non nasconderla via visibility: l'hero la copre finché non scorri. */
+        }
+        .second-content {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s ease-out,
+                        transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .second-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .second-content h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            line-height: 1.8;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            #intro-video {
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+                object-fit: cover;
+            }
+            #main-container { padding-bottom: 50px; }
+            .text-block h1 {
+                font-size: 1.4rem;
+                letter-spacing: 3px;
+                margin-bottom: 8px;
+            }
+            .text-block p {
+                font-size: 0.92rem;
+                letter-spacing: 5px;
+            }
+            .second-content h2 {
+                font-size: 1.25rem;
+                letter-spacing: 2.5px;
+                line-height: 1.7;
+                padding: 0 20px;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            #main-container, .text-block, .second-content, #video-container {
+                transition-duration: 0.01ms;
+            }
+        }
+    </style>
+</head>
+<body class="intro-playing">
+    <div id="video-container">
+        <video id="intro-video" autoplay muted playsinline preload="auto">
+            <source src="firma.mp4" type="video/mp4">
+            Il tuo browser non supporta i video HTML5.
+        </video>
+    </div>
+
+    <section id="hero-section">
+        <div id="main-container">
+            <div class="text-block">
+                <h1>GIOVANNI MENERELLA</h1>
+                <p>FOTOGRAFIA &amp; VISUAL</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="second-section">
+        <div class="second-content">
+            <h2>GUIDO L'IMMAGINE<br>DALLO SCATTO REALE<br>ALLA SUA FORMA FINALE</h2>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoContainer = document.getElementById('video-container');
+            const video = document.getElementById('intro-video');
+            const mainContainer = document.getElementById('main-container');
+            const secondContent = document.querySelector('.second-content');
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const bgImage = isMobile ? '01 mobile.jpg' : '01 desktop.jpg';
+            // Precaricamento, per non mostrare il nero quando termina il video.
+            const image = new Image();
+            image.src = bgImage;
+            mainContainer.style.backgroundImage = `url("${bgImage}")`;
+
+            let introFinished = false;
+            function finishIntro() {
+                if (introFinished) return;
+                introFinished = true;
+                // L'immagine entra mentre il video sfuma: niente flash intermedio.
+                mainContainer.classList.add('show');
+                videoContainer.style.opacity = '0';
+
+                videoContainer.addEventListener('transitionend', (event) => {
+                    if (event.propertyName === 'opacity') videoContainer.remove();
+                }, { once: true });
+                // Anche con animazioni disabilitate o transitionend non emesso.
+                setTimeout(() => videoContainer.remove(), 900);
+                document.body.classList.remove('intro-playing');
+            }
+
+            video.addEventListener('ended', finishIntro, { once: true });
+            video.addEventListener('error', finishIntro, { once: true });
+            video.play().catch((error) => {
+                console.warn('Il video introduttivo non è riproducibile:', error);
+                finishIntro();
+            });
+
+            // IntersectionObserver evita aggiornamenti continui di transform
+            // sull'immagine a ogni scroll, causa del lampeggiamento precedente.
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries.some(entry => entry.isIntersecting)) {
+                        secondContent.classList.add('visible');
+                        observer.disconnect();
+                    }
+                }, { threshold: 0.15 });
+                observer.observe(secondContent);
+            } else {
+                secondContent.classList.add('visible');
+            }
+        });
+    </script>
+</body>
+</html>
